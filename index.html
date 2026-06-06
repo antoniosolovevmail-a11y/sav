@@ -3,6 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#1D9E75">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Жилищник">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="description" content="Жилищник Савеловский — управление дворниками">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="icon" type="image/png" href="icon.png">
 <title>Жилищник — Савеловский</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap');
@@ -692,6 +701,11 @@ body {
     <button class="go-btn" id="go-btn" onclick="loginWorker()">Войти 👉</button>
     <div class="login-or">— или —</div>
     <button class="boss-btn" onclick="loginBoss()">👔 Я начальник</button>
+
+    <!-- PWA Install button -->
+    <button id="install-btn" onclick="installPWA()" style="display:none;margin-top:12px;width:100%;background:rgba(255,255,255,0.15);color:white;border:2px solid rgba(255,255,255,0.4);border-radius:14px;padding:13px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;">
+      📲 Установить на экран телефона
+    </button>
   </div>
 </div>
 
@@ -1832,6 +1846,8 @@ function approveTask(id) {
   t.status = 'done';
   saveTasks();
   showToast('✅ Принято!');
+  const w = WORKERS.find(x => x.id === t.workerId);
+  sendNotification('✅ Принято начальником!', `${t.address} — ${w ? w.short : ''}`, id);
   showBossHome();
 }
 
@@ -1839,8 +1855,11 @@ function rejectTask(id) {
   const t = tasks.find(x => x.id === id);
   t.status = 'new';
   t.responsePhotoData = null;
+  t.responsePhotos = null;
   saveTasks();
   showToast('↩️ Отправлено на доработку');
+  const w = WORKERS.find(x => x.id === t.workerId);
+  sendNotification('↩️ Нужно переделать', `${t.address} — проверь задачу`, id);
   showBossHome();
 }
 
@@ -2036,6 +2055,68 @@ async function uploadPdfToYaDisk(pdfData, pdfName, taskId) {
   const blob = dataURLtoBlob(pdfData);
   const url = await yaUploadFile(`${subfolder}/${taskId}_${pdfName}`, blob, 'application/pdf');
   return url;
+}
+
+// ─── PWA: INSTALL ───
+let deferredPrompt = null;
+
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  const btn = document.getElementById('install-btn');
+  if (btn) btn.style.display = 'block';
+});
+
+window.addEventListener('appinstalled', () => {
+  deferredPrompt = null;
+  const btn = document.getElementById('install-btn');
+  if (btn) btn.style.display = 'none';
+  showToast('🎉 Приложение установлено!');
+});
+
+function installPWA() {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(choice => {
+      if (choice.outcome === 'accepted') showToast('📲 Устанавливается...');
+      deferredPrompt = null;
+    });
+  } else {
+    // iOS Safari manual instruction
+    showToast('На iPhone: Safari → "Поделиться" → "На экран Домой"');
+  }
+}
+
+// ─── PWA: NOTIFICATIONS ───
+async function requestNotifications() {
+  if (!('Notification' in window)) return false;
+  if (Notification.permission === 'granted') return true;
+  if (Notification.permission === 'denied') return false;
+  const perm = await Notification.requestPermission();
+  return perm === 'granted';
+}
+
+async function sendNotification(title, body, tag) {
+  const ok = await requestNotifications();
+  if (!ok) return;
+  if ('serviceWorker' in navigator) {
+    const reg = await navigator.serviceWorker.ready;
+    reg.showNotification(title, {
+      body,
+      icon: 'icon.png',
+      badge: 'icon.png',
+      tag: tag || 'zhilishnik',
+      vibrate: [200, 100, 200],
+      requireInteraction: true,
+    });
+  } else {
+    new Notification(title, { body, icon: 'icon.png' });
+  }
+}
+
+// Register Service Worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
 }
 
 // ─── INIT ───
