@@ -1,0 +1,1519 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Жилищник — Савеловский</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap');
+
+:root {
+  --green: #1D9E75;
+  --green-d: #0F6E56;
+  --green-l: #E8F8F3;
+  --red: #E74C3C;
+  --red-l: #FDEDEC;
+  --yellow: #F39C12;
+  --yellow-l: #FEF9E7;
+  --blue: #2980B9;
+  --blue-l: #EBF5FB;
+  --ink: #1A1A2E;
+  --muted: #7F8C8D;
+  --bg: #F0F4F8;
+  --white: #FFFFFF;
+  --shadow: 0 4px 20px rgba(0,0,0,0.08);
+  --radius: 20px;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+
+body {
+  font-family: 'Nunito', sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  min-height: 100vh;
+  max-width: 430px;
+  margin: 0 auto;
+  overflow-x: hidden;
+}
+
+/* ─── SCREENS ─── */
+.screen { display: none; min-height: 100vh; flex-direction: column; }
+.screen.active { display: flex; }
+
+/* ─── LOGIN ─── */
+#screen-login {
+  background: linear-gradient(160deg, #0F6E56 0%, #1D9E75 50%, #27C48F 100%);
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+}
+.login-logo {
+  font-size: 64px;
+  margin-bottom: 16px;
+  animation: bounce 2s infinite;
+}
+@keyframes bounce {
+  0%,100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+.login-title {
+  font-size: 28px;
+  font-weight: 900;
+  color: white;
+  text-align: center;
+  margin-bottom: 6px;
+}
+.login-sub {
+  font-size: 15px;
+  color: rgba(255,255,255,0.75);
+  text-align: center;
+  margin-bottom: 40px;
+}
+.login-box {
+  background: white;
+  border-radius: var(--radius);
+  padding: 28px 24px;
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+}
+.login-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+}
+.worker-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.worker-btn {
+  background: var(--bg);
+  border: 2px solid transparent;
+  border-radius: 14px;
+  padding: 12px 8px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Nunito', sans-serif;
+}
+.worker-btn.selected {
+  background: var(--green-l);
+  border-color: var(--green);
+}
+.worker-btn .wb-emoji { font-size: 24px; display: block; margin-bottom: 4px; }
+.worker-btn .wb-name { font-size: 11px; font-weight: 700; color: var(--ink); line-height: 1.2; }
+.login-or { text-align: center; font-size: 13px; color: var(--muted); margin: 14px 0; }
+.boss-btn {
+  width: 100%;
+  background: var(--ink);
+  color: white;
+  border: none;
+  border-radius: 14px;
+  padding: 14px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+.boss-btn:active { transform: scale(0.97); }
+.go-btn {
+  width: 100%;
+  background: var(--green);
+  color: white;
+  border: none;
+  border-radius: 16px;
+  padding: 16px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 17px;
+  font-weight: 900;
+  cursor: pointer;
+  margin-top: 16px;
+  transition: transform 0.1s;
+  display: none;
+}
+.go-btn:active { transform: scale(0.97); }
+.go-btn.visible { display: block; }
+
+/* ─── TOP BAR ─── */
+.topbar {
+  background: var(--green);
+  padding: 16px 20px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.topbar-back {
+  font-size: 22px;
+  cursor: pointer;
+  color: white;
+  background: rgba(255,255,255,0.2);
+  border-radius: 10px;
+  width: 36px; height: 36px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.topbar-title { font-size: 17px; font-weight: 800; color: white; flex: 1; }
+.topbar-user { font-size: 13px; color: rgba(255,255,255,0.8); font-weight: 600; }
+
+/* ─── WORKER HOME ─── */
+#screen-worker {
+  background: var(--bg);
+}
+.worker-header {
+  background: linear-gradient(135deg, var(--green-d), var(--green));
+  padding: 28px 20px 80px;
+  position: relative;
+  overflow: hidden;
+}
+.worker-header::after {
+  content: '';
+  position: absolute;
+  bottom: -30px; left: -20px; right: -20px;
+  height: 60px;
+  background: var(--bg);
+  border-radius: 50%;
+}
+.wh-greeting { font-size: 14px; color: rgba(255,255,255,0.7); font-weight: 600; }
+.wh-name { font-size: 26px; font-weight: 900; color: white; margin-top: 2px; }
+.wh-date { font-size: 13px; color: rgba(255,255,255,0.6); margin-top: 4px; }
+.wh-emoji { position: absolute; right: 20px; top: 20px; font-size: 48px; }
+
+.tasks-container { padding: 12px 16px 100px; margin-top: -20px; }
+
+.section-title {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin: 20px 0 10px;
+}
+
+/* Task card */
+.task-card {
+  background: var(--white);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 10px;
+  box-shadow: var(--shadow);
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  cursor: pointer;
+  transition: transform 0.15s;
+  border-left: 5px solid var(--cc, #ccc);
+  position: relative;
+}
+.task-card:active { transform: scale(0.98); }
+.task-icon {
+  font-size: 28px;
+  flex-shrink: 0;
+  width: 44px; height: 44px;
+  background: var(--ic, #f0f0f0);
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+}
+.task-body { flex: 1; min-width: 0; }
+.task-title { font-size: 15px; font-weight: 800; color: var(--ink); line-height: 1.2; }
+.task-addr { font-size: 12px; color: var(--muted); margin-top: 3px; }
+.task-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 20px;
+  margin-top: 6px;
+}
+.badge-new { background: var(--red-l); color: var(--red); }
+.badge-pending { background: var(--yellow-l); color: var(--yellow); }
+.badge-done { background: var(--green-l); color: var(--green-d); }
+.badge-pdf { background: var(--blue-l); color: var(--blue); }
+.task-arrow { color: var(--muted); font-size: 18px; margin-top: 2px; }
+
+/* Stats row */
+.stats-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+.stat-box {
+  background: var(--white);
+  border-radius: 16px;
+  padding: 14px 10px;
+  text-align: center;
+  box-shadow: var(--shadow);
+}
+.stat-num { font-size: 28px; font-weight: 900; }
+.stat-num.red { color: var(--red); }
+.stat-num.yellow { color: var(--yellow); }
+.stat-num.green { color: var(--green); }
+.stat-label { font-size: 10px; font-weight: 700; color: var(--muted); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+/* ─── PORTAL DETAIL ─── */
+#screen-portal {
+  background: var(--bg);
+}
+.portal-content { padding: 16px 16px 100px; }
+.portal-card {
+  background: var(--white);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  margin-bottom: 14px;
+}
+.portal-card-header {
+  background: var(--red);
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.portal-card-header span { font-size: 22px; }
+.portal-card-title { font-size: 15px; font-weight: 800; color: white; }
+.portal-card-sub { font-size: 12px; color: rgba(255,255,255,0.75); margin-top: 1px; }
+.portal-body { padding: 14px 16px; }
+.portal-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 8px 0;
+  border-bottom: 1px solid #F0F4F8;
+  gap: 10px;
+}
+.portal-row:last-child { border: none; }
+.portal-key { font-size: 12px; color: var(--muted); font-weight: 600; flex-shrink: 0; }
+.portal-val { font-size: 12px; color: var(--ink); font-weight: 700; text-align: right; }
+
+/* PDF viewer */
+.pdf-viewer {
+  background: var(--white);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  margin-bottom: 14px;
+}
+.pdf-header {
+  background: var(--blue);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.pdf-header-title { font-size: 14px; font-weight: 800; color: white; }
+.pdf-thumb {
+  width: 100%;
+  aspect-ratio: 3/4;
+  background: #F0F4F8;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.pdf-thumb:active { background: #E8EEF5; }
+.pdf-icon { font-size: 52px; margin-bottom: 12px; }
+.pdf-filename { font-size: 14px; font-weight: 700; color: var(--ink); text-align: center; margin-bottom: 6px; }
+.pdf-tap { font-size: 12px; color: var(--muted); }
+.pdf-preview-area {
+  max-height: 400px;
+  overflow-y: auto;
+  padding: 12px;
+  background: #F8F9FA;
+  display: none;
+}
+.pdf-preview-area.open { display: block; }
+
+/* Big action buttons */
+.action-row {
+  display: grid;
+  gap: 10px;
+  margin-top: 4px;
+}
+.action-btn {
+  border: none;
+  border-radius: 18px;
+  padding: 18px 16px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 17px;
+  font-weight: 900;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: transform 0.1s, box-shadow 0.1s;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+}
+.action-btn:active { transform: scale(0.96); box-shadow: none; }
+.btn-done { background: var(--green); color: white; }
+.btn-problem { background: var(--red); color: white; }
+.btn-send { background: var(--blue); color: white; }
+.btn-pdf { background: var(--blue); color: white; }
+
+/* ─── RAKURS DETAIL ─── */
+#screen-rakurs {
+  background: var(--bg);
+}
+.rakurs-content { padding: 16px 16px 100px; }
+.rakurs-photo-card {
+  background: var(--white);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  margin-bottom: 14px;
+}
+.photo-header {
+  padding: 12px 16px;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-bottom: 1px solid var(--bg);
+}
+.photo-placeholder {
+  aspect-ratio: 4/3;
+  background: linear-gradient(135deg, #2c3e50, #34495e);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+.photo-placeholder img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  position: absolute;
+  top:0; left:0;
+}
+.photo-placeholder .photo-overlay {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  background: rgba(0,0,0,0.5);
+  padding: 8px 16px;
+  border-radius: 10px;
+}
+.photo-icon { font-size: 36px; }
+.photo-upload-area {
+  aspect-ratio: 4/3;
+  background: var(--green-l);
+  border: 3px dashed var(--green);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  position: relative;
+}
+.photo-upload-area input[type=file] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  font-size: 0;
+}
+.photo-upload-area .pu-icon { font-size: 40px; }
+.photo-upload-area .pu-text { font-size: 15px; font-weight: 800; color: var(--green-d); }
+.photo-upload-area .pu-sub { font-size: 12px; color: var(--muted); }
+.uploaded-preview {
+  aspect-ratio: 4/3;
+  position: relative;
+  display: none;
+}
+.uploaded-preview img { width: 100%; height: 100%; object-fit: cover; }
+.uploaded-preview .remove-photo {
+  position: absolute;
+  top: 8px; right: 8px;
+  background: var(--red);
+  color: white;
+  border: none;
+  border-radius: 20px;
+  padding: 6px 12px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+/* ─── BOSS HOME ─── */
+#screen-boss {
+  background: var(--bg);
+}
+.boss-header {
+  background: linear-gradient(135deg, #1A1A2E, #2C3E50);
+  padding: 28px 20px 80px;
+  position: relative;
+  overflow: hidden;
+}
+.boss-header::after {
+  content: '';
+  position: absolute;
+  bottom: -30px; left: -20px; right: -20px;
+  height: 60px;
+  background: var(--bg);
+  border-radius: 50%;
+}
+.bh-title { font-size: 24px; font-weight: 900; color: white; }
+.bh-sub { font-size: 13px; color: rgba(255,255,255,0.5); margin-top: 4px; }
+.bh-emoji { position: absolute; right: 20px; top: 20px; font-size: 44px; }
+
+.boss-container { padding: 12px 16px 100px; margin-top: -20px; }
+
+.approval-card {
+  background: var(--white);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 10px;
+  box-shadow: var(--shadow);
+  border-left: 5px solid var(--yellow);
+}
+.ac-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.ac-emoji { font-size: 28px; }
+.ac-name { font-size: 15px; font-weight: 800; color: var(--ink); }
+.ac-addr { font-size: 12px; color: var(--muted); }
+.ac-type { font-size: 11px; font-weight: 800; background: var(--yellow-l); color: var(--yellow); padding: 3px 8px; border-radius: 10px; display: inline-block; margin-bottom: 10px; }
+.ac-photos { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+.ac-photo {
+  aspect-ratio: 4/3;
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+  background: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+}
+.ac-photo-label {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  background: rgba(0,0,0,0.6);
+  color: white; font-size: 10px; font-weight: 800;
+  padding: 4px 6px; text-align: center;
+}
+.ac-photo-placeholder { font-size: 24px; }
+.ac-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.ac-btn {
+  border: none; border-radius: 14px; padding: 14px;
+  font-family: 'Nunito', sans-serif; font-size: 15px; font-weight: 900;
+  cursor: pointer; transition: transform 0.1s;
+}
+.ac-btn:active { transform: scale(0.96); }
+.ac-approve { background: var(--green); color: white; }
+.ac-reject { background: var(--red-l); color: var(--red); }
+
+/* Delete portal btn */
+.delete-portal-btn {
+  background: var(--red-l);
+  color: var(--red);
+  border: 2px solid var(--red);
+  border-radius: 14px;
+  padding: 14px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 15px;
+  font-weight: 900;
+  cursor: pointer;
+  width: 100%;
+  margin-top: 10px;
+  display: none;
+}
+
+/* Bottom nav */
+.bottom-nav {
+  position: fixed;
+  bottom: 0; left: 50%; transform: translateX(-50%);
+  width: 100%; max-width: 430px;
+  background: white;
+  border-top: 1px solid #E8EEF5;
+  display: flex;
+  padding: 10px 0 20px;
+  z-index: 200;
+}
+.nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  cursor: pointer;
+  padding: 6px 0;
+  transition: transform 0.1s;
+}
+.nav-item:active { transform: scale(0.9); }
+.nav-icon { font-size: 22px; }
+.nav-label { font-size: 10px; font-weight: 700; color: var(--muted); }
+.nav-item.active .nav-label { color: var(--green); }
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: 90px; left: 50%; transform: translateX(-50%) translateY(20px);
+  background: var(--ink);
+  color: white;
+  padding: 14px 24px;
+  border-radius: 30px;
+  font-size: 14px;
+  font-weight: 700;
+  z-index: 999;
+  opacity: 0;
+  transition: all 0.3s;
+  pointer-events: none;
+  white-space: nowrap;
+}
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Filter tabs */
+.ftab {
+  flex-shrink: 0;
+  background: var(--white);
+  border: 2px solid var(--line);
+  border-radius: 20px;
+  padding: 8px 16px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.ftab.active {
+  background: var(--green);
+  border-color: var(--green);
+  color: white;
+}
+
+/* Portal feed card */
+.pfeed-card {
+  background: var(--white);
+  border-radius: 16px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  box-shadow: var(--shadow);
+  border-left: 5px solid var(--cc, #ccc);
+}
+.pfeed-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.pfeed-icon {
+  font-size: 26px;
+  width: 42px; height: 42px;
+  background: var(--bg);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.pfeed-addr { font-size: 15px; font-weight: 800; color: var(--ink); }
+.pfeed-num { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.pfeed-status { margin-left: auto; font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 20px; white-space: nowrap; }
+.pfeed-problem {
+  font-size: 13px;
+  color: var(--ink);
+  background: var(--bg);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  line-height: 1.5;
+}
+.pfeed-meta {
+  display: flex;
+  gap: 14px;
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 600;
+}
+.pfeed-worker-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--green-l);
+  color: var(--green-d);
+  border-radius: 20px;
+  padding: 3px 10px;
+  font-size: 11px;
+  font-weight: 800;
+}
+.portal-list-item {
+  background: var(--white);
+  border-radius: 16px;
+  padding: 14px 16px;
+  margin-bottom: 8px;
+  box-shadow: var(--shadow);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: transform 0.1s;
+  border-left: 4px solid var(--cc, #ccc);
+}
+.portal-list-item:active { transform: scale(0.98); }
+.pli-icon { font-size: 26px; }
+.pli-body { flex: 1; }
+.pli-title { font-size: 14px; font-weight: 800; color: var(--ink); }
+.pli-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.pli-status { font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 20px; }
+</style>
+</head>
+<body>
+
+<!-- ═══ SCREEN: LOGIN ═══ -->
+<div id="screen-login" class="screen active">
+  <div class="login-logo">🧹</div>
+  <div class="login-title">Жилищник</div>
+  <div class="login-sub">Савеловский район</div>
+
+  <div class="login-box">
+    <div class="login-label">Кто ты?</div>
+    <div class="worker-grid" id="worker-grid">
+      <!-- filled by JS -->
+    </div>
+    <button class="go-btn" id="go-btn" onclick="loginWorker()">Войти 👉</button>
+    <div class="login-or">— или —</div>
+    <button class="boss-btn" onclick="loginBoss()">👔 Я начальник</button>
+  </div>
+</div>
+
+<!-- ═══ SCREEN: WORKER HOME ═══ -->
+<div id="screen-worker" class="screen">
+  <div class="worker-header">
+    <div class="wh-greeting">Привет,</div>
+    <div class="wh-name" id="wh-name">Имя</div>
+    <div class="wh-date" id="wh-date">Сегодня</div>
+    <div class="wh-emoji" id="wh-emoji">🧹</div>
+  </div>
+
+  <div class="tasks-container">
+    <div class="stats-row">
+      <div class="stat-box">
+        <div class="stat-num red" id="stat-new">0</div>
+        <div class="stat-label">Новых</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num yellow" id="stat-pending">0</div>
+        <div class="stat-label">В работе</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num green" id="stat-done">0</div>
+        <div class="stat-label">Готово</div>
+      </div>
+    </div>
+
+    <div class="section-title">🚪 Порталы</div>
+    <div id="portal-tasks"></div>
+
+    <div class="section-title">📸 Ракурсы</div>
+    <div id="rakurs-tasks"></div>
+  </div>
+
+  <div class="bottom-nav" id="worker-nav">
+    <div class="nav-item active" id="nav-home" onclick="switchTab('home')">
+      <div class="nav-icon">🏠</div>
+      <div class="nav-label">Мои задачи</div>
+    </div>
+    <div class="nav-item" id="nav-all" onclick="switchTab('all')">
+      <div class="nav-icon">🚪</div>
+      <div class="nav-label">Все порталы</div>
+    </div>
+    <div class="nav-item" onclick="logout()">
+      <div class="nav-icon">👋</div>
+      <div class="nav-label">Выйти</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SCREEN: ALL PORTALS ═══ -->
+<div id="screen-all-portals" class="screen">
+  <div style="background:linear-gradient(135deg,#2C3E50,#1A1A2E);padding:24px 20px 70px;position:relative;overflow:hidden;">
+    <div style="font-size:22px;font-weight:900;color:white;">🚪 Все порталы участка</div>
+    <div style="font-size:13px;color:rgba(255,255,255,0.5);margin-top:4px;" id="all-portals-sub">Загрузка...</div>
+    <div style="position:absolute;bottom:-30px;left:-20px;right:-20px;height:60px;background:var(--bg);border-radius:50%;"></div>
+  </div>
+
+  <div style="padding:12px 16px 100px;margin-top:-20px;">
+    <!-- Filter tabs -->
+    <div style="display:flex;gap:8px;margin-bottom:16px;overflow-x:auto;padding-bottom:4px;" id="filter-tabs">
+      <button class="ftab active" data-filter="all" onclick="filterPortals('all',this)">Все</button>
+      <button class="ftab" data-filter="new" onclick="filterPortals('new',this)">🔴 Активные</button>
+      <button class="ftab" data-filter="done_pending" onclick="filterPortals('done_pending',this)">⏳ На проверке</button>
+      <button class="ftab" data-filter="done" onclick="filterPortals('done',this)">✅ Закрытые</button>
+    </div>
+
+    <div id="all-portals-list"></div>
+  </div>
+
+  <div class="bottom-nav">
+    <div class="nav-item" onclick="switchTab('home')">
+      <div class="nav-icon">🏠</div>
+      <div class="nav-label">Мои задачи</div>
+    </div>
+    <div class="nav-item active" id="nav-all2">
+      <div class="nav-icon">🚪</div>
+      <div class="nav-label">Все порталы</div>
+    </div>
+    <div class="nav-item" onclick="logout()">
+      <div class="nav-icon">👋</div>
+      <div class="nav-label">Выйти</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SCREEN: PORTAL DETAIL ═══ -->
+<div id="screen-portal" class="screen">
+  <div class="topbar">
+    <div class="topbar-back" onclick="goBack('screen-worker')">←</div>
+    <div class="topbar-title" id="portal-screen-title">Портал</div>
+  </div>
+  <div class="portal-content">
+
+    <div class="portal-card">
+      <div class="portal-card-header" id="portal-card-header">
+        <span>🚪</span>
+        <div>
+          <div class="portal-card-title" id="pd-title">Закрыть портал</div>
+          <div class="portal-card-sub" id="pd-addr">Адрес</div>
+        </div>
+      </div>
+      <div class="portal-body">
+        <div class="portal-row">
+          <div class="portal-key">Номер заявки</div>
+          <div class="portal-val" id="pd-num">—</div>
+        </div>
+        <div class="portal-row">
+          <div class="portal-key">Проблема</div>
+          <div class="portal-val" id="pd-problem">—</div>
+        </div>
+        <div class="portal-row">
+          <div class="portal-key">Срок</div>
+          <div class="portal-val" id="pd-deadline">—</div>
+        </div>
+        <div class="portal-row">
+          <div class="portal-key">Статус</div>
+          <div class="portal-val" id="pd-status">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PDF viewer -->
+    <div class="pdf-viewer">
+      <div class="pdf-header">
+        <span>📄</span>
+        <div class="pdf-header-title">Документ заявки</div>
+      </div>
+      <div class="pdf-thumb" id="pdf-thumb" onclick="togglePdf()">
+        <div class="pdf-icon">📋</div>
+        <div class="pdf-filename" id="pdf-filename">Юннатов_8А.pdf</div>
+        <div class="pdf-tap">👆 Нажми чтобы открыть</div>
+      </div>
+      <div class="pdf-preview-area" id="pdf-preview">
+        <div style="background:white;padding:16px;border-radius:12px;font-size:13px;line-height:1.6;color:#333;">
+          <div style="font-weight:800;font-size:15px;margin-bottom:12px;">📋 Номер заявки: <span id="pv-num"></span></div>
+          <div style="background:#FEF9E7;padding:10px;border-radius:8px;margin-bottom:10px;border-left:3px solid #F39C12;">
+            <div style="font-weight:700;color:#E67E22;margin-bottom:4px;">⚠️ Проблема</div>
+            <div id="pv-problem"></div>
+          </div>
+          <div style="margin-bottom:8px;"><b>📍 Адрес:</b> <span id="pv-addr"></span></div>
+          <div style="margin-bottom:8px;"><b>📅 Срок ответа:</b> <span id="pv-deadline"></span></div>
+          <div style="background:#EBF5FB;padding:10px;border-radius:8px;margin-top:10px;">
+            <div style="font-weight:700;color:#2980B9;margin-bottom:4px;">💬 Сообщение жителя</div>
+            <div id="pv-message" style="font-size:12px;color:#555;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="action-row">
+      <button class="action-btn btn-done" id="portal-done-btn" onclick="markPortalDone()">
+        ✅ Закрыл в «Наш город»
+      </button>
+      <button class="action-btn btn-problem" onclick="showToast('Сообщение начальнику отправлено 📨')">
+        ❗ Есть проблема
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SCREEN: RAKURS DETAIL ═══ -->
+<div id="screen-rakurs" class="screen">
+  <div class="topbar">
+    <div class="topbar-back" onclick="goBack('screen-worker')">←</div>
+    <div class="topbar-title" id="rakurs-screen-title">Ракурс</div>
+  </div>
+  <div class="rakurs-content">
+
+    <div class="rakurs-photo-card">
+      <div class="photo-header">📸 Фото замечания (от начальника)</div>
+      <div class="photo-placeholder" id="orig-photo">
+        <div class="photo-overlay">
+          <div class="photo-icon">🖼️</div>
+          <div>Фото замечания</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="portal-card" style="margin-bottom:14px;">
+      <div class="portal-body" style="padding-top:14px;">
+        <div class="portal-row">
+          <div class="portal-key">Адрес</div>
+          <div class="portal-val" id="rd-addr">—</div>
+        </div>
+        <div class="portal-row">
+          <div class="portal-key">Тип нарушения</div>
+          <div class="portal-val" id="rd-type">—</div>
+        </div>
+        <div class="portal-row">
+          <div class="portal-key">Срок</div>
+          <div class="portal-val" id="rd-deadline">—</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="rakurs-photo-card">
+      <div class="photo-header">📷 Твоё фото (с того же ракурса)</div>
+      <div class="photo-upload-area" id="upload-area">
+        <input type="file" accept="image/*" capture="environment" onchange="handlePhotoUpload(event)">
+        <div class="pu-icon">📷</div>
+        <div class="pu-text">Сфотографировать</div>
+        <div class="pu-sub">Нажми и сними с того же места</div>
+      </div>
+      <div class="uploaded-preview" id="uploaded-preview">
+        <img id="uploaded-img" src="" alt="">
+        <button class="remove-photo" onclick="removePhoto()">✕ Убрать</button>
+      </div>
+    </div>
+
+    <div class="action-row">
+      <button class="action-btn btn-done" id="rakurs-send-btn" onclick="sendRakurs()">
+        📤 Отправить начальнику
+      </button>
+      <button class="action-btn btn-problem" onclick="showToast('Сообщение отправлено 📨')">
+        ❗ Не могу устранить
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SCREEN: BOSS ═══ -->
+<div id="screen-boss" class="screen">
+  <div class="boss-header">
+    <div class="bh-title">Панель начальника</div>
+    <div class="bh-sub" id="boss-date">Сегодня</div>
+    <div class="bh-emoji">👔</div>
+  </div>
+
+  <div class="boss-container">
+    <div class="stats-row">
+      <div class="stat-box">
+        <div class="stat-num red" id="boss-stat-new">0</div>
+        <div class="stat-label">Активных</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num yellow" id="boss-stat-pending">0</div>
+        <div class="stat-label">На проверке</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num green" id="boss-stat-done">0</div>
+        <div class="stat-label">Закрыто</div>
+      </div>
+    </div>
+
+    <div class="section-title">⏳ Ожидают одобрения</div>
+    <div id="boss-approvals"></div>
+
+    <div class="section-title">🚪 Все порталы</div>
+    <div id="boss-portals"></div>
+
+    <div class="section-title">📸 Все ракурсы</div>
+    <div id="boss-rakurs"></div>
+
+    <button class="action-btn btn-send" style="margin-top:10px;" onclick="showToast('Добавление заявок в разработке')">
+      ➕ Добавить заявку
+    </button>
+
+    <button class="action-btn" style="margin-top:10px;background:var(--bg);color:var(--muted);" onclick="logout()">
+      👋 Выйти
+    </button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── DATA ───
+const WORKERS = [
+  { id: 1,  name: "Аликулов Равшан",     short: "Равшан",     emoji: "🧹", phone: "8 968 805 1501" },
+  { id: 2,  name: "Байназаров Ниетбай",  short: "Ниетбай",    emoji: "🧹", phone: "8 968 040 8053" },
+  { id: 3,  name: "Баратов Самандар",    short: "Самандар",   emoji: "🧹", phone: "8 967 004 1058" },
+  { id: 5,  name: "Давидян Эдуард",      short: "Эдуард",     emoji: "🧹", phone: "8 999 907 5386" },
+  { id: 6,  name: "Жураев Шерали",       short: "Шерали",     emoji: "🧹", phone: "8 901 360 2398" },
+  { id: 7,  name: "Иброхимов Хасанджон", short: "Хасанджон",  emoji: "🧹", phone: "8 903 234 9395" },
+  { id: 9,  name: "Напасов Дилшодбек",   short: "Дилшодбек",  emoji: "🧹", phone: "8 903 517 9415" },
+  { id: 10, name: "Рахмонов Шерзод",     short: "Шерзод",     emoji: "🧹", phone: "8 906 084 8678" },
+  { id: 11, name: "Рузиев Ойбекжон",     short: "Ойбекжон",   emoji: "🧹", phone: "8 991 869 8335" },
+  { id: 12, name: "Сержанов Тимурхан",   short: "Тимурхан",   emoji: "🧹", phone: "8 916 983 5988" },
+  { id: 13, name: "Худойкулов Дилшод",   short: "Дилшод",     emoji: "🧹", phone: "8 901 355 4335" },
+  { id: 14, name: "Худойкулов Миржалол", short: "Миржалол",   emoji: "🧹", phone: "8 977 559 4173" },
+  { id: 15, name: "Шкабара Николай",     short: "Николай",    emoji: "🧹", phone: "8 901 681 1356" },
+  { id: 17, name: "Худайкулов Жауахыр",  short: "Жауахыр",    emoji: "🧹", phone: "8 901 713 3355" },
+];
+
+// Tasks stored in localStorage via storage API or fallback
+let tasks = [];
+let currentUser = null;
+let currentTaskId = null;
+let uploadedPhotoData = null;
+
+function loadTasks() {
+  const saved = localStorage.getItem('savelo_tasks');
+  if (saved) {
+    tasks = JSON.parse(saved);
+  } else {
+    tasks = [
+      {
+        id: 't1', type: 'portal', workerId: 5,
+        title: 'Закрыть портал',
+        address: 'ул. Юннатов, д. 8А',
+        number: '152995797',
+        problem: 'Отсутствие травяного покрова на газоне',
+        deadline: '16.06.2026',
+        message: 'Удаляя корни упавшего дерева, содрали весь газон. Привезли некачественную землю. Голуби склевали посадочный материал.',
+        status: 'new',
+        pdfName: 'Юннатов_8А.pdf',
+        hasPdf: true,
+      },
+      {
+        id: 't2', type: 'portal', workerId: 10,
+        title: 'Закрыть портал',
+        address: 'ул. Мишина, д. 38',
+        number: '152001234',
+        problem: 'Ненадлежащее содержание цоколя',
+        deadline: '20.06.2026',
+        message: 'Облупилась краска на цоколе со стороны двора.',
+        status: 'new',
+        hasPdf: false,
+      },
+      {
+        id: 't3', type: 'rakurs', workerId: 5,
+        title: 'Отработать ракурс',
+        address: 'ул. Юннатов, д. 8А',
+        type_violation: 'Отсутствие травяного покрова на газоне',
+        deadline: '16.06.2026',
+        status: 'new',
+        origPhotoUrl: null,
+      },
+      {
+        id: 't4', type: 'rakurs', workerId: 7,
+        title: 'Отработать ракурс',
+        address: 'ПР пр., д. 17',
+        type_violation: 'Несанкционированная свалка мусора',
+        deadline: '18.06.2026',
+        status: 'done_pending',
+        origPhotoUrl: null,
+        responsePhotoData: 'mock',
+      },
+    ];
+    saveTasks();
+  }
+}
+
+function saveTasks() {
+  localStorage.setItem('savelo_tasks', JSON.stringify(tasks));
+}
+
+// ─── LOGIN ───
+function buildWorkerGrid() {
+  const grid = document.getElementById('worker-grid');
+  grid.innerHTML = '';
+  WORKERS.forEach(w => {
+    const btn = document.createElement('div');
+    btn.className = 'worker-btn';
+    btn.dataset.id = w.id;
+    // Show first word of last name
+    const displayName = w.short;
+    btn.innerHTML = `<span class="wb-emoji">${w.emoji}</span><span class="wb-name">${displayName}</span>`;
+    btn.onclick = () => selectWorker(w.id, btn);
+    grid.appendChild(btn);
+  });
+}
+
+function selectWorker(id, el) {
+  document.querySelectorAll('.worker-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  currentUser = { role: 'worker', id };
+  document.getElementById('go-btn').classList.add('visible');
+}
+
+function loginWorker() {
+  if (!currentUser) return;
+  const w = WORKERS.find(x => x.id === currentUser.id);
+  currentUser.worker = w;
+  showWorkerHome(w);
+}
+
+function loginBoss() {
+  currentUser = { role: 'boss' };
+  showBossHome();
+}
+
+function logout() {
+  currentUser = null;
+  document.querySelectorAll('.worker-btn').forEach(b => b.classList.remove('selected'));
+  document.getElementById('go-btn').classList.remove('visible');
+  showScreen('screen-login');
+}
+
+// ─── WORKER HOME ───
+function showWorkerHome(w) {
+  showScreen('screen-worker');
+  document.getElementById('wh-name').textContent = w.name;
+  document.getElementById('wh-date').textContent = formatDate(new Date());
+
+  const myTasks = tasks.filter(t => t.workerId === w.id);
+  const portals = myTasks.filter(t => t.type === 'portal');
+  const rakursy = myTasks.filter(t => t.type === 'rakurs');
+
+  const newCount = myTasks.filter(t => t.status === 'new').length;
+  const pendingCount = myTasks.filter(t => t.status === 'done_pending').length;
+  const doneCount = myTasks.filter(t => t.status === 'done').length;
+
+  document.getElementById('stat-new').textContent = newCount;
+  document.getElementById('stat-pending').textContent = pendingCount;
+  document.getElementById('stat-done').textContent = doneCount;
+
+  const portalContainer = document.getElementById('portal-tasks');
+  portalContainer.innerHTML = '';
+  if (portals.length === 0) {
+    portalContainer.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:14px;font-weight:700;">🎉 Нет активных порталов!</div>';
+  } else {
+    portals.forEach(t => {
+      const el = buildTaskCard(t);
+      el.onclick = () => openPortal(t.id);
+      portalContainer.appendChild(el);
+    });
+  }
+
+  const rakursContainer = document.getElementById('rakurs-tasks');
+  rakursContainer.innerHTML = '';
+  if (rakursy.length === 0) {
+    rakursContainer.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:14px;font-weight:700;">🎉 Нет ракурсов!</div>';
+  } else {
+    rakursy.forEach(t => {
+      const el = buildTaskCard(t);
+      el.onclick = () => openRakurs(t.id);
+      rakursContainer.appendChild(el);
+    });
+  }
+}
+
+function buildTaskCard(t) {
+  const card = document.createElement('div');
+  card.className = 'task-card';
+
+  const isPortal = t.type === 'portal';
+  const colors = { new: '#E74C3C', done_pending: '#F39C12', done: '#1D9E75' };
+  const bgColors = { new: '#FDEDEC', done_pending: '#FEF9E7', done: '#E8F8F3' };
+  const labels = { new: '🔴 Новое', done_pending: '⏳ На проверке', done: '✅ Выполнено' };
+
+  card.style.setProperty('--cc', colors[t.status] || '#ccc');
+  card.style.setProperty('--ic', bgColors[t.status] || '#f0f0f0');
+
+  card.innerHTML = `
+    <div class="task-icon">${isPortal ? '🚪' : '📸'}</div>
+    <div class="task-body">
+      <div class="task-title">${isPortal ? t.problem : (t.type_violation || 'Ракурс')}</div>
+      <div class="task-addr">📍 ${t.address}</div>
+      ${t.number ? `<div class="task-addr">№ ${t.number}</div>` : ''}
+      <span class="task-badge ${t.status === 'new' ? 'badge-new' : t.status === 'done_pending' ? 'badge-pending' : 'badge-done'}">${labels[t.status]}</span>
+      ${isPortal && t.hasPdf ? '<span class="task-badge badge-pdf" style="margin-left:4px;">📄 PDF</span>' : ''}
+    </div>
+    <div class="task-arrow">›</div>
+  `;
+  return card;
+}
+
+// ─── PORTAL DETAIL ───
+function openPortal(id) {
+  const t = tasks.find(x => x.id === id);
+  currentTaskId = id;
+
+  document.getElementById('portal-screen-title').textContent = t.address;
+  document.getElementById('pd-title').textContent = t.problem;
+  document.getElementById('pd-addr').textContent = t.address;
+  document.getElementById('pd-num').textContent = t.number || '—';
+  document.getElementById('pd-problem').textContent = t.problem;
+  document.getElementById('pd-deadline').textContent = t.deadline || '—';
+  document.getElementById('pd-status').textContent = t.status === 'done' ? '✅ Закрыт' : t.status === 'done_pending' ? '⏳ На проверке' : '🔴 Активен';
+
+  document.getElementById('pv-num').textContent = t.number || '—';
+  document.getElementById('pv-problem').textContent = t.problem;
+  document.getElementById('pv-addr').textContent = t.address;
+  document.getElementById('pv-deadline').textContent = t.deadline || '—';
+  document.getElementById('pv-message').textContent = t.message || '—';
+  document.getElementById('pdf-filename').textContent = t.pdfName || 'Документ.pdf';
+
+  // Hide pdf thumb if no pdf
+  document.querySelector('.pdf-viewer').style.display = t.hasPdf ? 'block' : 'none';
+
+  const doneBtn = document.getElementById('portal-done-btn');
+  if (t.status === 'done' || t.status === 'done_pending') {
+    doneBtn.textContent = '✅ Уже отправлено на проверку';
+    doneBtn.disabled = true;
+    doneBtn.style.opacity = '0.5';
+  } else {
+    doneBtn.textContent = '✅ Закрыл в «Наш город»';
+    doneBtn.disabled = false;
+    doneBtn.style.opacity = '1';
+  }
+
+  // close pdf if open
+  document.getElementById('pdf-preview').classList.remove('open');
+
+  showScreen('screen-portal');
+}
+
+function togglePdf() {
+  const area = document.getElementById('pdf-preview');
+  area.classList.toggle('open');
+  document.getElementById('pdf-thumb').style.display = area.classList.contains('open') ? 'none' : 'flex';
+}
+
+function markPortalDone() {
+  const t = tasks.find(x => x.id === currentTaskId);
+  t.status = 'done_pending';
+  saveTasks();
+  showToast('Отправлено на проверку начальнику! 🎉');
+  setTimeout(() => goBack('screen-worker'), 1200);
+  if (currentUser?.worker) showWorkerHome(currentUser.worker);
+}
+
+// ─── RAKURS DETAIL ───
+function openRakurs(id) {
+  const t = tasks.find(x => x.id === id);
+  currentTaskId = id;
+  uploadedPhotoData = null;
+
+  document.getElementById('rakurs-screen-title').textContent = t.address;
+  document.getElementById('rd-addr').textContent = t.address;
+  document.getElementById('rd-type').textContent = t.type_violation || '—';
+  document.getElementById('rd-deadline').textContent = t.deadline || '—';
+
+  document.getElementById('upload-area').style.display = 'flex';
+  document.getElementById('uploaded-preview').style.display = 'none';
+  document.getElementById('uploaded-img').src = '';
+
+  const sendBtn = document.getElementById('rakurs-send-btn');
+  if (t.status === 'done' || t.status === 'done_pending') {
+    sendBtn.textContent = '✅ Уже отправлено на проверку';
+    sendBtn.disabled = true;
+    sendBtn.style.opacity = '0.5';
+    document.getElementById('upload-area').style.display = 'none';
+  } else {
+    sendBtn.textContent = '📤 Отправить начальнику';
+    sendBtn.disabled = false;
+    sendBtn.style.opacity = '1';
+    document.getElementById('upload-area').style.display = 'flex';
+  }
+
+  showScreen('screen-rakurs');
+}
+
+function handlePhotoUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    uploadedPhotoData = ev.target.result;
+    document.getElementById('uploaded-img').src = uploadedPhotoData;
+    document.getElementById('uploaded-preview').style.display = 'block';
+    document.getElementById('upload-area').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+function removePhoto() {
+  uploadedPhotoData = null;
+  document.getElementById('uploaded-img').src = '';
+  document.getElementById('uploaded-preview').style.display = 'none';
+  document.getElementById('upload-area').style.display = 'flex';
+}
+
+function sendRakurs() {
+  if (!uploadedPhotoData) {
+    showToast('Сначала сделай фото! 📷');
+    return;
+  }
+  const t = tasks.find(x => x.id === currentTaskId);
+  t.status = 'done_pending';
+  t.responsePhotoData = uploadedPhotoData;
+  saveTasks();
+  showToast('Фото отправлено начальнику! 🎉');
+  setTimeout(() => goBack('screen-worker'), 1200);
+  if (currentUser?.worker) showWorkerHome(currentUser.worker);
+}
+
+// ─── BOSS HOME ───
+function showBossHome() {
+  showScreen('screen-boss');
+  document.getElementById('boss-date').textContent = formatDate(new Date());
+
+  const active = tasks.filter(t => t.status === 'new').length;
+  const pending = tasks.filter(t => t.status === 'done_pending').length;
+  const done = tasks.filter(t => t.status === 'done').length;
+
+  document.getElementById('boss-stat-new').textContent = active;
+  document.getElementById('boss-stat-pending').textContent = pending;
+  document.getElementById('boss-stat-done').textContent = done;
+
+  // Approvals
+  const approvalsEl = document.getElementById('boss-approvals');
+  const pending_tasks = tasks.filter(t => t.status === 'done_pending');
+  approvalsEl.innerHTML = '';
+  if (pending_tasks.length === 0) {
+    approvalsEl.innerHTML = '<div style="text-align:center;padding:16px;color:var(--muted);font-size:14px;font-weight:700;">Нет заявок на проверке</div>';
+  } else {
+    pending_tasks.forEach(t => {
+      const w = WORKERS.find(x => x.id === t.workerId);
+      const card = document.createElement('div');
+      card.className = 'approval-card';
+      card.innerHTML = `
+        <div class="ac-header">
+          <div class="ac-emoji">${t.type === 'portal' ? '🚪' : '📸'}</div>
+          <div>
+            <div class="ac-name">${w ? w.short : '—'}</div>
+            <div class="ac-addr">${t.address}</div>
+          </div>
+        </div>
+        <div class="ac-type">${t.type === 'portal' ? '🚪 Портал' : '📸 Ракурс'}</div>
+        ${t.type === 'rakurs' && t.responsePhotoData ? `
+        <div class="ac-photos">
+          <div class="ac-photo">
+            <div class="ac-photo-placeholder">🖼️</div>
+            <div class="ac-photo-label">Замечание</div>
+          </div>
+          <div class="ac-photo" style="background:#F0F4F8;">
+            <img src="${t.responsePhotoData}" style="width:100%;height:100%;object-fit:cover;" alt="">
+            <div class="ac-photo-label">Отработано</div>
+          </div>
+        </div>
+        ` : `<div style="padding:10px 0;font-size:13px;color:var(--muted);">📋 № ${t.number || '—'} — ${t.problem || t.type_violation || '—'}</div>`}
+        <div class="ac-btns">
+          <button class="ac-btn ac-approve" onclick="approveTask('${t.id}')">✅ Принято</button>
+          <button class="ac-btn ac-reject" onclick="rejectTask('${t.id}')">↩️ На доработку</button>
+        </div>
+        ${t.type === 'portal' && t.hasPdf ? `<button class="delete-portal-btn" id="del-${t.id}" style="display:block;" onclick="deletePortal('${t.id}')">🗑️ Удалить PDF после закрытия</button>` : ''}
+      `;
+      approvalsEl.appendChild(card);
+    });
+  }
+
+  // All portals
+  const portalsEl = document.getElementById('boss-portals');
+  portalsEl.innerHTML = '';
+  tasks.filter(t => t.type === 'portal').forEach(t => {
+    const w = WORKERS.find(x => x.id === t.workerId);
+    const colors = { new: '#E74C3C', done_pending: '#F39C12', done: '#1D9E75' };
+    const labels = { new: '🔴 Активен', done_pending: '⏳ Проверка', done: '✅ Закрыт' };
+    const item = document.createElement('div');
+    item.className = 'portal-list-item';
+    item.style.setProperty('--cc', colors[t.status] || '#ccc');
+    item.innerHTML = `
+      <div class="pli-icon">🚪</div>
+      <div class="pli-body">
+        <div class="pli-title">${t.address}</div>
+        <div class="pli-sub">${w ? w.short : '—'} · № ${t.number || '—'}</div>
+      </div>
+      <span class="pli-status" style="background:${colors[t.status]}22;color:${colors[t.status]}">${labels[t.status]}</span>
+    `;
+    portalsEl.appendChild(item);
+  });
+
+  // All rakurs
+  const rakursEl = document.getElementById('boss-rakurs');
+  rakursEl.innerHTML = '';
+  tasks.filter(t => t.type === 'rakurs').forEach(t => {
+    const w = WORKERS.find(x => x.id === t.workerId);
+    const colors = { new: '#E74C3C', done_pending: '#F39C12', done: '#1D9E75' };
+    const labels = { new: '🔴 Не отработан', done_pending: '⏳ Проверка', done: '✅ Закрыт' };
+    const item = document.createElement('div');
+    item.className = 'portal-list-item';
+    item.style.setProperty('--cc', colors[t.status] || '#ccc');
+    item.innerHTML = `
+      <div class="pli-icon">📸</div>
+      <div class="pli-body">
+        <div class="pli-title">${t.address}</div>
+        <div class="pli-sub">${w ? w.short : '—'} · ${t.type_violation || '—'}</div>
+      </div>
+      <span class="pli-status" style="background:${colors[t.status]}22;color:${colors[t.status]}">${labels[t.status]}</span>
+    `;
+    rakursEl.appendChild(item);
+  });
+}
+
+function approveTask(id) {
+  const t = tasks.find(x => x.id === id);
+  t.status = 'done';
+  saveTasks();
+  showToast('✅ Принято!');
+  showBossHome();
+}
+
+function rejectTask(id) {
+  const t = tasks.find(x => x.id === id);
+  t.status = 'new';
+  t.responsePhotoData = null;
+  saveTasks();
+  showToast('↩️ Отправлено на доработку');
+  showBossHome();
+}
+
+function deletePortal(id) {
+  if (!confirm('Удалить PDF этого портала после закрытия?')) return;
+  const t = tasks.find(x => x.id === id);
+  t.hasPdf = false;
+  t.pdfName = null;
+  saveTasks();
+  showToast('🗑️ PDF удалён');
+  showBossHome();
+}
+
+// ─── UTILS ───
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function goBack(to) {
+  showScreen(to);
+  if (to === 'screen-worker' && currentUser?.worker) {
+    showWorkerHome(currentUser.worker);
+  }
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function formatDate(d) {
+  const days = ['Воскресенье','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота'];
+  const months = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
+  return `${days[d.getDay()]}, ${d.getDate()} ${months[d.getMonth()]}`;
+}
+
+// ─── TAB SWITCHING ───
+function switchTab(tab) {
+  if (tab === 'home') {
+    showScreen('screen-worker');
+    if (currentUser?.worker) showWorkerHome(currentUser.worker);
+    document.getElementById('nav-home').classList.add('active');
+    document.getElementById('nav-all').classList.remove('active');
+  } else {
+    showAllPortals();
+    document.getElementById('nav-home').classList.remove('active');
+    document.getElementById('nav-all').classList.add('active');
+  }
+}
+
+// ─── ALL PORTALS FEED ───
+let currentFilter = 'all';
+
+function showAllPortals() {
+  showScreen('screen-all-portals');
+  const allPortals = tasks.filter(t => t.type === 'portal');
+  const active = allPortals.filter(t => t.status === 'new').length;
+  const pending = allPortals.filter(t => t.status === 'done_pending').length;
+  const done = allPortals.filter(t => t.status === 'done').length;
+  document.getElementById('all-portals-sub').textContent =
+    `Всего: ${allPortals.length} · 🔴 ${active} активных · ⏳ ${pending} на проверке · ✅ ${done} закрыто`;
+  renderPortalFeed(currentFilter);
+}
+
+function filterPortals(filter, btn) {
+  currentFilter = filter;
+  document.querySelectorAll('.ftab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderPortalFeed(filter);
+}
+
+function renderPortalFeed(filter) {
+  const list = document.getElementById('all-portals-list');
+  list.innerHTML = '';
+
+  let portals = tasks.filter(t => t.type === 'portal');
+  if (filter !== 'all') portals = portals.filter(t => t.status === filter);
+
+  if (portals.length === 0) {
+    list.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:15px;font-weight:700;">
+      ${filter === 'done' ? '🎉 Нет закрытых порталов' : filter === 'new' ? '🎉 Нет активных!' : 'Нет заявок'}
+    </div>`;
+    return;
+  }
+
+  const colors = { new: '#E74C3C', done_pending: '#F39C12', done: '#1D9E75' };
+  const labels = { new: '🔴 Активен', done_pending: '⏳ Проверка', done: '✅ Закрыт' };
+
+  portals.forEach(t => {
+    const w = WORKERS.find(x => x.id === t.workerId);
+    const card = document.createElement('div');
+    card.className = 'pfeed-card';
+    card.style.setProperty('--cc', colors[t.status] || '#ccc');
+
+    const isMyTask = currentUser?.role === 'worker' && t.workerId === currentUser.id;
+
+    card.innerHTML = `
+      <div class="pfeed-top">
+        <div class="pfeed-icon">🚪</div>
+        <div style="flex:1;min-width:0;">
+          <div class="pfeed-addr">${t.address}</div>
+          <div class="pfeed-num">№ ${t.number || '—'} · Срок: ${t.deadline || '—'}</div>
+        </div>
+        <div class="pfeed-status" style="background:${colors[t.status]}22;color:${colors[t.status]}">
+          ${labels[t.status]}
+        </div>
+      </div>
+      <div class="pfeed-problem">⚠️ ${t.problem}</div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        ${w ? `<span class="pfeed-worker-tag">🧹 ${w.short}</span>` : ''}
+        ${isMyTask ? `<span style="background:#EBF5FB;color:#2980B9;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:800;">👆 Моя задача</span>` : ''}
+        ${t.hasPdf ? `<span style="background:var(--blue-l);color:var(--blue);border-radius:20px;padding:3px 10px;font-size:11px;font-weight:800;">📄 PDF</span>` : ''}
+      </div>
+      ${isMyTask && t.status === 'new' ? `
+        <button onclick="openPortal('${t.id}')" style="width:100%;margin-top:10px;background:var(--green);color:white;border:none;border-radius:12px;padding:12px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;">
+          ➡️ Открыть и закрыть
+        </button>
+      ` : ''}
+    `;
+    list.appendChild(card);
+  });
+}
+
+// ─── INIT ───
+loadTasks();
+buildWorkerGrid();
+</script>
+</body>
+</html>
