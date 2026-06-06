@@ -1619,8 +1619,7 @@ let addType = 'portal';
 let assignType = 'personal'; // 'personal' | 'all'
 let newPdfData = null;
 let newPdfName = null;
-let newRakursPhotos = [];
-
+let newRakursPhotos = []; // массив фото замечания от начальника
 function setAddType(type, btn) {
   addType = type;
   document.querySelectorAll('#add-type-portal,#add-type-rakurs').forEach(b => b.classList.remove('active'));
@@ -1636,8 +1635,6 @@ function setAssignType(type, btn) {
   document.getElementById('worker-select-wrap').style.display = type === 'personal' ? 'block' : 'none';
   document.getElementById('all-workers-info').style.display = type === 'all' ? 'block' : 'none';
 }
-
-let newRakursPhotos = []; // массив фото замечания от начальника
 
 function handleRakursPhotoUpload(e) {
   const files = Array.from(e.target.files);
