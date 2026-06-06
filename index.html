@@ -859,6 +859,7 @@ body {
   <div class="topbar">
     <div class="topbar-back" onclick="goBack('screen-worker')">←</div>
     <div class="topbar-title" id="rakurs-screen-title">Ракурс</div>
+    <div id="rakurs-counter" style="background:rgba(255,255,255,0.2);color:white;font-size:12px;font-weight:800;padding:4px 10px;border-radius:20px;margin-left:auto;"></div>
   </div>
   <div class="rakurs-content">
 
@@ -889,17 +890,29 @@ body {
       </div>
     </div>
 
+    <!-- MULTI PHOTO SECTION -->
     <div class="rakurs-photo-card">
-      <div class="photo-header">📷 Твоё фото (с того же ракурса)</div>
-      <div class="photo-upload-area" id="upload-area">
-        <input type="file" accept="image/*" capture="environment" onchange="handlePhotoUpload(event)">
-        <div class="pu-icon">📷</div>
-        <div class="pu-text">Сфотографировать</div>
-        <div class="pu-sub">Нажми и сними с того же места</div>
+      <div class="photo-header" style="display:flex;justify-content:space-between;align-items:center;">
+        <span>📷 Твои фото</span>
+        <span id="photo-count-label" style="background:var(--green);color:white;font-size:11px;font-weight:800;padding:3px 10px;border-radius:20px;">0 фото</span>
       </div>
-      <div class="uploaded-preview" id="uploaded-preview">
-        <img id="uploaded-img" src="" alt="">
-        <button class="remove-photo" onclick="removePhoto()">✕ Убрать</button>
+
+      <!-- Photo grid -->
+      <div id="photo-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:10px;min-height:80px;"></div>
+
+      <!-- Camera / Upload buttons -->
+      <div id="photo-actions" style="padding:10px;display:flex;gap:8px;">
+        <label style="flex:1;background:var(--green);color:white;border-radius:14px;padding:14px;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;">
+          <span>📷</span> Камера
+          <input type="file" accept="image/*" capture="environment" style="display:none;" onchange="addPhoto(event)">
+        </label>
+        <label style="flex:1;background:var(--blue);color:white;border-radius:14px;padding:14px;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;">
+          <span>🖼️</span> Галерея
+          <input type="file" accept="image/*" multiple style="display:none;" onchange="addPhotos(event)">
+        </label>
+      </div>
+      <div style="padding:0 10px 12px;text-align:center;font-size:11px;color:var(--muted);font-weight:600;">
+        Можно добавить сколько угодно фото
       </div>
     </div>
 
@@ -947,9 +960,95 @@ body {
     <div class="section-title">📸 Все ракурсы</div>
     <div id="boss-rakurs"></div>
 
-    <button class="action-btn btn-send" style="margin-top:10px;" onclick="showToast('Добавление заявок в разработке')">
-      ➕ Добавить заявку
-    </button>
+    <!-- ADD TASK FORM -->
+    <div class="section-title">➕ Добавить заявку</div>
+    <div style="background:var(--white);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);margin-bottom:10px;">
+
+      <!-- Тип задачи -->
+      <div style="margin-bottom:12px;">
+        <div style="font-size:12px;font-weight:800;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;">Тип</div>
+        <div style="display:flex;gap:8px;">
+          <button class="ftab active" id="add-type-portal" onclick="setAddType('portal',this)">🚪 Портал</button>
+          <button class="ftab" id="add-type-rakurs" onclick="setAddType('rakurs',this)">📸 Ракурс</button>
+        </div>
+      </div>
+
+      <!-- Кому назначить -->
+      <div style="margin-bottom:12px;">
+        <div style="font-size:12px;font-weight:800;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;">Кому назначить</div>
+        <div style="display:flex;gap:8px;margin-bottom:10px;">
+          <button class="ftab active" id="assign-personal" onclick="setAssignType('personal',this)" style="flex:1;">👤 Лично дворнику</button>
+          <button class="ftab" id="assign-all" onclick="setAssignType('all',this)" style="flex:1;">👥 Общая задача</button>
+        </div>
+        <!-- Personal: выбор дворника -->
+        <div id="worker-select-wrap">
+          <select id="add-worker" style="width:100%;border:2px solid var(--line);border-radius:12px;padding:12px;font-family:'Nunito',sans-serif;font-size:14px;outline:none;background:white;">
+            <option value="">— выбери дворника —</option>
+          </select>
+        </div>
+        <!-- All: пояснение -->
+        <div id="all-workers-info" style="display:none;background:var(--green-l);border-radius:12px;padding:12px;font-size:13px;color:var(--green-d);font-weight:700;">
+          👥 Задача будет видна всем дворникам в разделе «Все порталы». Любой может взять и выполнить.
+        </div>
+      </div>
+
+      <!-- Адрес -->
+      <div style="margin-bottom:12px;">
+        <div style="font-size:12px;font-weight:800;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;">Адрес</div>
+        <input id="add-address" placeholder="ул. Юннатов, д. 8А" style="width:100%;border:2px solid var(--line);border-radius:12px;padding:12px;font-family:'Nunito',sans-serif;font-size:14px;outline:none;">
+      </div>
+
+      <!-- Проблема -->
+      <div style="margin-bottom:12px;">
+        <div style="font-size:12px;font-weight:800;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;">Проблема / Нарушение</div>
+        <input id="add-problem" placeholder="Описание проблемы" style="width:100%;border:2px solid var(--line);border-radius:12px;padding:12px;font-family:'Nunito',sans-serif;font-size:14px;outline:none;">
+      </div>
+
+      <!-- Номер заявки -->
+      <div style="margin-bottom:12px;">
+        <div style="font-size:12px;font-weight:800;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;">Номер заявки</div>
+        <input id="add-number" placeholder="152995797" style="width:100%;border:2px solid var(--line);border-radius:12px;padding:12px;font-family:'Nunito',sans-serif;font-size:14px;outline:none;">
+      </div>
+
+      <!-- Срок -->
+      <div style="margin-bottom:12px;">
+        <div style="font-size:12px;font-weight:800;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;">Срок (дд.мм.гггг)</div>
+        <input id="add-deadline" placeholder="20.06.2026" style="width:100%;border:2px solid var(--line);border-radius:12px;padding:12px;font-family:'Nunito',sans-serif;font-size:14px;outline:none;">
+      </div>
+
+      <!-- Фото ракурса (для ракурсов) -->
+      <div id="add-rakurs-photo-section" style="margin-bottom:12px;display:none;">
+        <div style="font-size:12px;font-weight:800;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;">📸 Фото замечания (что нужно отработать)</div>
+        <label style="display:flex;align-items:center;gap:10px;background:var(--yellow-l);border:2px dashed var(--yellow);border-radius:12px;padding:14px;cursor:pointer;">
+          <span style="font-size:24px;">📸</span>
+          <div>
+            <div style="font-size:13px;font-weight:800;color:var(--yellow);" id="rakurs-photo-label">Нажми чтобы добавить фото замечания</div>
+            <div style="font-size:11px;color:var(--muted);">Дворник увидит это как образец</div>
+          </div>
+          <input type="file" accept="image/*" id="add-rakurs-photo" style="display:none;" onchange="handleRakursPhotoUpload(event)">
+        </label>
+        <div id="rakurs-photo-preview" style="display:none;margin-top:8px;border-radius:12px;overflow:hidden;max-height:180px;">
+          <img id="rakurs-preview-img" src="" style="width:100%;object-fit:cover;">
+        </div>
+      </div>
+
+      <!-- PDF (для порталов) -->
+      <div id="add-pdf-section" style="margin-bottom:12px;">
+        <div style="font-size:12px;font-weight:800;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;">📄 PDF документа (необязательно)</div>
+        <label style="display:flex;align-items:center;gap:10px;background:var(--blue-l);border:2px dashed var(--blue);border-radius:12px;padding:14px;cursor:pointer;">
+          <span style="font-size:24px;">📄</span>
+          <div>
+            <div style="font-size:13px;font-weight:800;color:var(--blue);" id="pdf-upload-label">Нажми чтобы загрузить PDF</div>
+            <div style="font-size:11px;color:var(--muted);">Дворник сможет открыть в приложении</div>
+          </div>
+          <input type="file" accept=".pdf,application/pdf" id="add-pdf-file" style="display:none;" onchange="handlePdfUpload(event)">
+        </label>
+      </div>
+
+      <button class="action-btn btn-done" onclick="addTask()" style="margin-top:4px;">
+        ➕ Добавить задачу
+      </button>
+    </div>
 
     <button class="action-btn" style="margin-top:10px;background:var(--bg);color:var(--muted);" onclick="logout()">
       👋 Выйти
@@ -1072,8 +1171,13 @@ function loginWorker() {
 }
 
 function loginBoss() {
-  currentUser = { role: 'boss' };
-  showBossHome();
+  const pass = prompt('🔐 Введите пароль начальника:');
+  if (pass === '2511') {
+    currentUser = { role: 'boss' };
+    showBossHome();
+  } else if (pass !== null) {
+    showToast('❌ Неверный пароль');
+  }
 }
 
 function logout() {
@@ -1089,7 +1193,7 @@ function showWorkerHome(w) {
   document.getElementById('wh-name').textContent = w.name;
   document.getElementById('wh-date').textContent = formatDate(new Date());
 
-  const myTasks = tasks.filter(t => t.workerId === w.id);
+  const myTasks = tasks.filter(t => t.workerId === w.id || t.isShared);
   const portals = myTasks.filter(t => t.type === 'portal');
   const rakursy = myTasks.filter(t => t.type === 'rakurs');
 
@@ -1103,10 +1207,11 @@ function showWorkerHome(w) {
 
   const portalContainer = document.getElementById('portal-tasks');
   portalContainer.innerHTML = '';
-  if (portals.length === 0) {
+  const sortedPortals = sortByDeadline(portals);
+  if (sortedPortals.length === 0) {
     portalContainer.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:14px;font-weight:700;">🎉 Нет активных порталов!</div>';
   } else {
-    portals.forEach(t => {
+    sortedPortals.forEach(t => {
       const el = buildTaskCard(t);
       el.onclick = () => openPortal(t.id);
       portalContainer.appendChild(el);
@@ -1115,10 +1220,11 @@ function showWorkerHome(w) {
 
   const rakursContainer = document.getElementById('rakurs-tasks');
   rakursContainer.innerHTML = '';
-  if (rakursy.length === 0) {
+  const sortedRakurs = sortByDeadline(rakursy);
+  if (sortedRakurs.length === 0) {
     rakursContainer.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:14px;font-weight:700;">🎉 Нет ракурсов!</div>';
   } else {
-    rakursy.forEach(t => {
+    sortedRakurs.forEach(t => {
       const el = buildTaskCard(t);
       el.onclick = () => openRakurs(t.id);
       rakursContainer.appendChild(el);
@@ -1138,18 +1244,35 @@ function buildTaskCard(t) {
   card.style.setProperty('--cc', colors[t.status] || '#ccc');
   card.style.setProperty('--ic', bgColors[t.status] || '#f0f0f0');
 
+  const urgency = getUrgency(t.deadline);
   card.innerHTML = `
     <div class="task-icon">${isPortal ? '🚪' : '📸'}</div>
     <div class="task-body">
       <div class="task-title">${isPortal ? t.problem : (t.type_violation || 'Ракурс')}</div>
       <div class="task-addr">📍 ${t.address}</div>
       ${t.number ? `<div class="task-addr">№ ${t.number}</div>` : ''}
+      ${t.deadline ? `<div style="font-size:11px;font-weight:800;color:${urgency.color};margin-top:2px;">${urgency.icon} Срок: ${t.deadline}</div>` : ''}
       <span class="task-badge ${t.status === 'new' ? 'badge-new' : t.status === 'done_pending' ? 'badge-pending' : 'badge-done'}">${labels[t.status]}</span>
       ${isPortal && t.hasPdf ? '<span class="task-badge badge-pdf" style="margin-left:4px;">📄 PDF</span>' : ''}
+      ${t.isShared ? '<span class="task-badge" style="margin-left:4px;background:#EBF5FB;color:#2980B9;">👥 Общая</span>' : ''}
     </div>
     <div class="task-arrow">›</div>
   `;
   return card;
+}
+
+// ─── URGENCY ───
+function getUrgency(deadline) {
+  if (!deadline) return { color: '#999', bg: '#f5f5f5', icon: '📅' };
+  const parts = deadline.split('.');
+  const d = new Date(parts[2], parts[1]-1, parts[0]);
+  const today = new Date(); today.setHours(0,0,0,0);
+  const diff = Math.round((d - today) / 86400000);
+  if (diff < 0)  return { color: '#E74C3C', bg: '#FDEDEC', icon: '🔥' }; // просрочен
+  if (diff === 0) return { color: '#E74C3C', bg: '#FDEDEC', icon: '🚨' }; // сегодня
+  if (diff <= 2)  return { color: '#E07B2B', bg: '#FEF0E7', icon: '⚠️' }; // скоро
+  if (diff <= 5)  return { color: '#F39C12', bg: '#FEF9E7', icon: '📅' }; // в этой неделе
+  return { color: '#1D9E75', bg: '#E8F8F3', icon: '✅' };
 }
 
 // ─── PORTAL DETAIL ───
@@ -1163,7 +1286,13 @@ function openPortal(id) {
   document.getElementById('pd-num').textContent = t.number || '—';
   document.getElementById('pd-problem').textContent = t.problem;
   document.getElementById('pd-deadline').textContent = t.deadline || '—';
-  document.getElementById('pd-status').textContent = t.status === 'done' ? '✅ Закрыт' : t.status === 'done_pending' ? '⏳ На проверке' : '🔴 Активен';
+
+  const urgency = getUrgency(t.deadline);
+  document.getElementById('pd-status').innerHTML = t.status === 'done'
+    ? '✅ Закрыт'
+    : t.status === 'done_pending'
+    ? '⏳ На проверке'
+    : `🔴 Активен &nbsp;<span style="color:${urgency.color};font-weight:800;">${urgency.icon} ${t.deadline || ''}</span>`;
 
   document.getElementById('pv-num').textContent = t.number || '—';
   document.getElementById('pv-problem').textContent = t.problem;
@@ -1172,8 +1301,22 @@ function openPortal(id) {
   document.getElementById('pv-message').textContent = t.message || '—';
   document.getElementById('pdf-filename').textContent = t.pdfName || 'Документ.pdf';
 
-  // Hide pdf thumb if no pdf
-  document.querySelector('.pdf-viewer').style.display = t.hasPdf ? 'block' : 'none';
+  // PDF viewer — show iframe if pdfData exists
+  const pdfViewer = document.querySelector('.pdf-viewer');
+  if (t.hasPdf && t.pdfData) {
+    pdfViewer.style.display = 'block';
+    document.getElementById('pdf-preview').innerHTML = `
+      <iframe src="${t.pdfData}" style="width:100%;height:500px;border:none;border-radius:0 0 12px 12px;" title="PDF"></iframe>
+    `;
+    document.getElementById('pdf-preview').classList.add('open');
+    document.getElementById('pdf-thumb').style.display = 'none';
+  } else if (t.hasPdf) {
+    pdfViewer.style.display = 'block';
+    document.getElementById('pdf-preview').classList.remove('open');
+    document.getElementById('pdf-thumb').style.display = 'flex';
+  } else {
+    pdfViewer.style.display = 'none';
+  }
 
   const doneBtn = document.getElementById('portal-done-btn');
   if (t.status === 'done' || t.status === 'done_pending') {
@@ -1185,9 +1328,6 @@ function openPortal(id) {
     doneBtn.disabled = false;
     doneBtn.style.opacity = '1';
   }
-
-  // close pdf if open
-  document.getElementById('pdf-preview').classList.remove('open');
 
   showScreen('screen-portal');
 }
@@ -1208,74 +1348,371 @@ function markPortalDone() {
 }
 
 // ─── RAKURS DETAIL ───
+// ─── RAKURS DETAIL ───
+let uploadedPhotos = []; // array of base64 strings
+
 function openRakurs(id) {
   const t = tasks.find(x => x.id === id);
   currentTaskId = id;
-  uploadedPhotoData = null;
+  uploadedPhotos = t.responsePhotos ? [...t.responsePhotos] : [];
 
   document.getElementById('rakurs-screen-title').textContent = t.address;
   document.getElementById('rd-addr').textContent = t.address;
   document.getElementById('rd-type').textContent = t.type_violation || '—';
   document.getElementById('rd-deadline').textContent = t.deadline || '—';
 
-  document.getElementById('upload-area').style.display = 'flex';
-  document.getElementById('uploaded-preview').style.display = 'none';
-  document.getElementById('uploaded-img').src = '';
+  // Показать фото замечания от начальника
+  const origPhoto = document.getElementById('orig-photo');
+  if (t.origPhotoData) {
+    origPhoto.innerHTML = `<img src="${t.origPhotoData}" style="width:100%;max-height:260px;object-fit:cover;">`;
+  } else {
+    origPhoto.innerHTML = `<div class="photo-overlay"><div class="photo-icon">🖼️</div><div>Фото замечания не прикреплено</div></div>`;
+  }
+
+  renderPhotoGrid();
 
   const sendBtn = document.getElementById('rakurs-send-btn');
+  const photoActions = document.getElementById('photo-actions');
   if (t.status === 'done' || t.status === 'done_pending') {
     sendBtn.textContent = '✅ Уже отправлено на проверку';
     sendBtn.disabled = true;
     sendBtn.style.opacity = '0.5';
-    document.getElementById('upload-area').style.display = 'none';
+    photoActions.style.display = 'none';
   } else {
     sendBtn.textContent = '📤 Отправить начальнику';
     sendBtn.disabled = false;
     sendBtn.style.opacity = '1';
-    document.getElementById('upload-area').style.display = 'flex';
+    photoActions.style.display = 'flex';
   }
 
   showScreen('screen-rakurs');
 }
 
-function handlePhotoUpload(e) {
+function renderPhotoGrid() {
+  const grid = document.getElementById('photo-grid');
+  const label = document.getElementById('photo-count-label');
+  const counter = document.getElementById('rakurs-counter');
+
+  label.textContent = uploadedPhotos.length + ' фото';
+  counter.textContent = uploadedPhotos.length > 0 ? '📷 ' + uploadedPhotos.length : '';
+
+  grid.innerHTML = '';
+  if (uploadedPhotos.length === 0) {
+    grid.innerHTML = `<div style="grid-column:span 3;text-align:center;padding:24px;color:var(--muted);font-size:13px;font-weight:700;">
+      📷 Нажми кнопку ниже чтобы добавить фото
+    </div>`;
+    return;
+  }
+
+  uploadedPhotos.forEach((src, i) => {
+    const cell = document.createElement('div');
+    cell.style.cssText = 'position:relative;aspect-ratio:1;border-radius:10px;overflow:hidden;background:#eee;';
+    cell.innerHTML = `
+      <img src="${src}" style="width:100%;height:100%;object-fit:cover;" onclick="viewPhoto(${i})">
+      <button onclick="removePhotoAt(${i})" style="position:absolute;top:4px;right:4px;background:rgba(231,76,60,0.9);color:white;border:none;border-radius:50%;width:22px;height:22px;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;">✕</button>
+      <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.4);color:white;font-size:9px;font-weight:800;text-align:center;padding:2px;">Фото ${i+1}</div>
+    `;
+    grid.appendChild(cell);
+  });
+
+  // Add more button at the end
+  const addCell = document.createElement('label');
+  addCell.style.cssText = 'aspect-ratio:1;border-radius:10px;border:2px dashed var(--green);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;background:var(--green-l);gap:4px;';
+  addCell.innerHTML = `
+    <span style="font-size:22px;">➕</span>
+    <span style="font-size:9px;font-weight:800;color:var(--green-d);">ЕЩЁ</span>
+    <input type="file" accept="image/*" capture="environment" style="display:none;" onchange="addPhoto(event)">
+  `;
+  grid.appendChild(addCell);
+}
+
+function addPhoto(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  compressAndAdd([file]);
+  e.target.value = '';
+}
+
+function addPhotos(e) {
+  const files = Array.from(e.target.files);
+  if (!files.length) return;
+  compressAndAdd(files);
+  e.target.value = '';
+}
+
+function compressAndAdd(files) {
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = ev => {
+      // Compress via canvas
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX = 1200;
+        let w = img.width, h = img.height;
+        if (w > MAX) { h = h * MAX / w; w = MAX; }
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        const compressed = canvas.toDataURL('image/jpeg', 0.7);
+        uploadedPhotos.push(compressed);
+        renderPhotoGrid();
+        showToast(`📷 Фото ${uploadedPhotos.length} добавлено!`);
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function removePhotoAt(i) {
+  uploadedPhotos.splice(i, 1);
+  renderPhotoGrid();
+}
+
+function viewPhoto(i) {
+  // Full screen preview
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;';
+  overlay.innerHTML = `
+    <div style="position:absolute;top:16px;right:16px;display:flex;gap:8px;">
+      <button onclick="downloadPhoto('${uploadedPhotos[i]}','фото_${i+1}.jpg')" style="background:var(--blue);color:white;border:none;border-radius:20px;padding:8px 16px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer;">⬇️ Скачать</button>
+      <button onclick="this.closest('div[style]').remove()" style="background:rgba(255,255,255,0.2);color:white;border:none;border-radius:20px;padding:8px 16px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer;">✕ Закрыть</button>
+    </div>
+    <div style="padding:60px 16px 16px;color:rgba(255,255,255,0.5);font-size:12px;font-weight:700;text-align:center;">Фото ${i+1} из ${uploadedPhotos.length}</div>
+    <img src="${uploadedPhotos[i]}" style="max-width:100%;max-height:75vh;object-fit:contain;border-radius:8px;">
+    <div style="display:flex;gap:12px;margin-top:16px;">
+      ${i > 0 ? `<button onclick="this.closest('div[style]').remove();viewPhoto(${i-1})" style="background:rgba(255,255,255,0.15);color:white;border:none;border-radius:20px;padding:10px 20px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;">← Пред</button>` : ''}
+      ${i < uploadedPhotos.length-1 ? `<button onclick="this.closest('div[style]').remove();viewPhoto(${i+1})" style="background:rgba(255,255,255,0.15);color:white;border:none;border-radius:20px;padding:10px 20px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;">След →</button>` : ''}
+    </div>
+  `;
+  document.body.appendChild(overlay);
+}
+
+async function sendRakurs() {
+  if (uploadedPhotos.length === 0) {
+    showToast('Сначала добавь хотя бы одно фото! 📷');
+    return;
+  }
+  const t = tasks.find(x => x.id === currentTaskId);
+  const w = WORKERS.find(x => x.id === t.workerId);
+  const sendBtn = document.getElementById('rakurs-send-btn');
+  sendBtn.disabled = true;
+  sendBtn.textContent = '⏳ Загружаю на Яндекс.Диск...';
+
+  try {
+    const yaUrls = await uploadPhotosToYaDisk(
+      uploadedPhotos,
+      w ? w.short : 'дворник',
+      t.address,
+      t.id
+    );
+    t.status = 'done_pending';
+    t.responsePhotos = [...uploadedPhotos];
+    t.responsePhotoData = uploadedPhotos[0];
+    t.yaPhotoUrls = yaUrls;
+    saveTasks();
+    showToast(`🎉 ${uploadedPhotos.length} фото сохранено на Яндекс.Диске!`);
+  } catch(e) {
+    t.status = 'done_pending';
+    t.responsePhotos = [...uploadedPhotos];
+    t.responsePhotoData = uploadedPhotos[0];
+    saveTasks();
+    showToast('📤 Отправлено начальнику!');
+  }
+  setTimeout(() => goBack('screen-worker'), 1600);
+  if (currentUser?.worker) showWorkerHome(currentUser.worker);
+}
+
+// ─── ADD TASK ───
+let addType = 'portal';
+let assignType = 'personal'; // 'personal' | 'all'
+let newPdfData = null;
+let newPdfName = null;
+let newRakursPhotoData = null;
+
+function setAddType(type, btn) {
+  addType = type;
+  document.querySelectorAll('#add-type-portal,#add-type-rakurs').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('add-pdf-section').style.display = type === 'portal' ? 'block' : 'none';
+  document.getElementById('add-rakurs-photo-section').style.display = type === 'rakurs' ? 'block' : 'none';
+}
+
+function setAssignType(type, btn) {
+  assignType = type;
+  document.querySelectorAll('#assign-personal,#assign-all').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('worker-select-wrap').style.display = type === 'personal' ? 'block' : 'none';
+  document.getElementById('all-workers-info').style.display = type === 'all' ? 'block' : 'none';
+}
+
+function handleRakursPhotoUpload(e) {
   const file = e.target.files[0];
   if (!file) return;
   const reader = new FileReader();
-  reader.onload = function(ev) {
-    uploadedPhotoData = ev.target.result;
-    document.getElementById('uploaded-img').src = uploadedPhotoData;
-    document.getElementById('uploaded-preview').style.display = 'block';
-    document.getElementById('upload-area').style.display = 'none';
+  reader.onload = ev => {
+    newRakursPhotoData = ev.target.result;
+    document.getElementById('rakurs-photo-label').textContent = '✅ Фото добавлено';
+    document.getElementById('rakurs-preview-img').src = newRakursPhotoData;
+    document.getElementById('rakurs-photo-preview').style.display = 'block';
   };
   reader.readAsDataURL(file);
 }
 
-function removePhoto() {
-  uploadedPhotoData = null;
-  document.getElementById('uploaded-img').src = '';
-  document.getElementById('uploaded-preview').style.display = 'none';
-  document.getElementById('upload-area').style.display = 'flex';
+function handlePdfUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  newPdfName = file.name;
+  document.getElementById('pdf-upload-label').textContent = '✅ ' + file.name;
+  const reader = new FileReader();
+  reader.onload = ev => { newPdfData = ev.target.result; };
+  reader.readAsDataURL(file);
 }
 
-function sendRakurs() {
-  if (!uploadedPhotoData) {
-    showToast('Сначала сделай фото! 📷');
-    return;
+function populateWorkerSelect() {
+  const sel = document.getElementById('add-worker');
+  sel.innerHTML = '<option value="">— выбери дворника —</option>';
+  WORKERS.forEach(w => {
+    const opt = document.createElement('option');
+    opt.value = w.id;
+    opt.textContent = w.name;
+    sel.appendChild(opt);
+  });
+}
+
+function addTask() {
+  const address  = document.getElementById('add-address').value.trim();
+  const problem  = document.getElementById('add-problem').value.trim();
+  const number   = document.getElementById('add-number').value.trim();
+  const deadline = document.getElementById('add-deadline').value.trim();
+  const workerId = assignType === 'personal' ? parseInt(document.getElementById('add-worker').value) : null;
+
+  if (!address || !problem) { showToast('Заполни адрес и проблему!'); return; }
+  if (assignType === 'personal' && !workerId) { showToast('Выбери дворника!'); return; }
+
+  const makeTask = (wId) => {
+    const id = 't' + Date.now() + (wId || 'all') + Math.random().toString(36).slice(2,5);
+    const task = { id, address, problem, number, deadline, status: 'new', type: addType };
+    if (wId) task.workerId = wId;
+    else task.isShared = true; // видна всем
+
+    if (addType === 'portal') {
+      task.title = 'Закрыть портал';
+      task.message = '';
+      if (newPdfData) {
+        task.hasPdf = true;
+        task.pdfName = newPdfName;
+        task.pdfData = newPdfData;
+        uploadPdfToYaDisk(newPdfData, newPdfName, id).then(url => {
+          if (url) { task.yaPdfUrl = url; saveTasks(); showToast('📄 PDF загружен на Яндекс.Диск!'); }
+        });
+      }
+    } else {
+      task.type_violation = problem;
+      task.title = 'Отработать ракурс';
+      if (newRakursPhotoData) task.origPhotoData = newRakursPhotoData;
+    }
+    return task;
+  };
+
+  if (assignType === 'all') {
+    // Создаём одну общую задачу без workerId
+    tasks.push(makeTask(null));
+    showToast('✅ Общая задача добавлена для всех!');
+  } else {
+    tasks.push(makeTask(workerId));
+    const w = WORKERS.find(x => x.id === workerId);
+    showToast(`✅ Задача назначена: ${w ? w.short : ''}!`);
   }
-  const t = tasks.find(x => x.id === currentTaskId);
-  t.status = 'done_pending';
-  t.responsePhotoData = uploadedPhotoData;
+
   saveTasks();
-  showToast('Фото отправлено начальнику! 🎉');
-  setTimeout(() => goBack('screen-worker'), 1200);
-  if (currentUser?.worker) showWorkerHome(currentUser.worker);
+
+  // Reset form
+  document.getElementById('add-address').value = '';
+  document.getElementById('add-problem').value = '';
+  document.getElementById('add-number').value = '';
+  document.getElementById('add-deadline').value = '';
+  document.getElementById('add-worker').value = '';
+  document.getElementById('pdf-upload-label').textContent = 'Нажми чтобы загрузить PDF';
+  document.getElementById('rakurs-photo-label').textContent = 'Нажми чтобы добавить фото замечания';
+  document.getElementById('rakurs-photo-preview').style.display = 'none';
+  newPdfData = null; newPdfName = null; newRakursPhotoData = null;
+
+  showBossHome();
+}
+
+// ─── SORT BY DEADLINE ───
+function sortByDeadline(arr) {
+  return [...arr].sort((a, b) => {
+    if (!a.deadline) return 1;
+    if (!b.deadline) return -1;
+    const pa = a.deadline.split('.').reverse().join('');
+    const pb = b.deadline.split('.').reverse().join('');
+    // Active first, then by date
+    const statusOrder = { new: 0, done_pending: 1, done: 2 };
+    if ((statusOrder[a.status]||0) !== (statusOrder[b.status]||0))
+      return (statusOrder[a.status]||0) - (statusOrder[b.status]||0);
+    return pa.localeCompare(pb);
+  });
+}
+
+// ─── DOWNLOAD PHOTO ───
+function downloadPhoto(dataUrl, filename) {
+  const a = document.createElement('a');
+  a.href = dataUrl;
+  a.download = filename || 'photo.jpg';
+  a.click();
+}
+
+// ─── DOWNLOAD ALL PHOTOS ───
+function downloadAllPhotos(photos, prefix) {
+  if (!photos || photos.length === 0) return;
+  photos.forEach((src, i) => {
+    setTimeout(() => {
+      downloadPhoto(src, `${prefix}_фото${i+1}.jpg`);
+    }, i * 400);
+  });
+  showToast(`⬇️ Скачиваем ${photos.length} фото...`);
+}
+
+function viewBossPhoto(photos, startIndex) {
+  const overlay = document.createElement('div');
+  let cur = startIndex;
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;';
+
+  function render() {
+    overlay.innerHTML = `
+      <div style="position:absolute;top:16px;right:16px;display:flex;gap:8px;">
+        <button onclick="downloadPhoto('${photos[cur]}','фото_${cur+1}.jpg')" style="background:var(--blue);color:white;border:none;border-radius:20px;padding:8px 16px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer;">⬇️</button>
+        <button id="close-overlay" style="background:rgba(255,255,255,0.2);color:white;border:none;border-radius:20px;padding:8px 16px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer;">✕</button>
+      </div>
+      <div style="color:rgba(255,255,255,0.6);font-size:13px;font-weight:700;margin-bottom:12px;">Фото ${cur+1} из ${photos.length}</div>
+      <img src="${photos[cur]}" style="max-width:100%;max-height:72vh;object-fit:contain;border-radius:8px;padding:0 8px;">
+      <div style="display:flex;gap:12px;margin-top:16px;">
+        <button id="prev-btn" style="background:rgba(255,255,255,${cur>0?'0.2':'0.05'});color:${cur>0?'white':'rgba(255,255,255,0.2)'};border:none;border-radius:20px;padding:10px 20px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;">← Пред</button>
+        <button id="next-btn" style="background:rgba(255,255,255,${cur<photos.length-1?'0.2':'0.05'});color:${cur<photos.length-1?'white':'rgba(255,255,255,0.2)'};border:none;border-radius:20px;padding:10px 20px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;">След →</button>
+      </div>
+      <!-- Thumbnails -->
+      <div style="display:flex;gap:6px;margin-top:12px;overflow-x:auto;max-width:100%;padding:0 16px;">
+        ${photos.map((s,i) => `<img src="${s}" onclick="goTo${i}" data-idx="${i}" style="width:48px;height:48px;object-fit:cover;border-radius:6px;border:2px solid ${i===cur?'white':'transparent'};cursor:pointer;flex-shrink:0;">`).join('')}
+      </div>
+    `;
+    overlay.querySelector('#close-overlay').onclick = () => overlay.remove();
+    overlay.querySelector('#prev-btn').onclick = () => { if(cur>0){cur--;render();} };
+    overlay.querySelector('#next-btn').onclick = () => { if(cur<photos.length-1){cur++;render();} };
+    overlay.querySelectorAll('[data-idx]').forEach(el => {
+      el.onclick = () => { cur = parseInt(el.dataset.idx); render(); };
+    });
+  }
+  render();
+  document.body.appendChild(overlay);
 }
 
 // ─── BOSS HOME ───
 function showBossHome() {
   showScreen('screen-boss');
   document.getElementById('boss-date').textContent = formatDate(new Date());
+  populateWorkerSelect();
 
   const active = tasks.filter(t => t.status === 'new').length;
   const pending = tasks.filter(t => t.status === 'done_pending').length;
@@ -1285,9 +1722,9 @@ function showBossHome() {
   document.getElementById('boss-stat-pending').textContent = pending;
   document.getElementById('boss-stat-done').textContent = done;
 
-  // Approvals
+  // Approvals — sorted by deadline
   const approvalsEl = document.getElementById('boss-approvals');
-  const pending_tasks = tasks.filter(t => t.status === 'done_pending');
+  const pending_tasks = sortByDeadline(tasks.filter(t => t.status === 'done_pending'));
   approvalsEl.innerHTML = '';
   if (pending_tasks.length === 0) {
     approvalsEl.innerHTML = '<div style="text-align:center;padding:16px;color:var(--muted);font-size:14px;font-weight:700;">Нет заявок на проверке</div>';
@@ -1296,44 +1733,56 @@ function showBossHome() {
       const w = WORKERS.find(x => x.id === t.workerId);
       const card = document.createElement('div');
       card.className = 'approval-card';
+      const urgency = getUrgency(t.deadline);
       card.innerHTML = `
         <div class="ac-header">
           <div class="ac-emoji">${t.type === 'portal' ? '🚪' : '📸'}</div>
-          <div>
-            <div class="ac-name">${w ? w.short : '—'}</div>
+          <div style="flex:1;">
+            <div class="ac-name">${w ? w.name : '—'}</div>
             <div class="ac-addr">${t.address}</div>
           </div>
+          ${t.deadline ? `<div style="text-align:right;font-size:11px;font-weight:800;color:${urgency.color};background:${urgency.bg};padding:4px 8px;border-radius:8px;">${urgency.icon} ${t.deadline}</div>` : ''}
         </div>
         <div class="ac-type">${t.type === 'portal' ? '🚪 Портал' : '📸 Ракурс'}</div>
-        ${t.type === 'rakurs' && t.responsePhotoData ? `
-        <div class="ac-photos">
-          <div class="ac-photo">
-            <div class="ac-photo-placeholder">🖼️</div>
-            <div class="ac-photo-label">Замечание</div>
+        ${t.type === 'rakurs' && (t.responsePhotos?.length || t.responsePhotoData) ? `
+        <div style="margin-bottom:8px;">
+          <div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">
+            📷 Фото от дворника (${t.responsePhotos ? t.responsePhotos.length : 1} шт.)
           </div>
-          <div class="ac-photo" style="background:#F0F4F8;">
-            <img src="${t.responsePhotoData}" style="width:100%;height:100%;object-fit:cover;" alt="">
-            <div class="ac-photo-label">Отработано</div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:8px;">
+            ${(t.responsePhotos || [t.responsePhotoData]).map((src, i) => `
+              <div style="position:relative;aspect-ratio:1;border-radius:8px;overflow:hidden;cursor:pointer;" onclick="viewBossPhoto(${JSON.stringify(t.responsePhotos || [t.responsePhotoData])}, ${i})">
+                <img src="${src}" style="width:100%;height:100%;object-fit:cover;">
+                <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.4);color:white;font-size:9px;font-weight:800;text-align:center;padding:2px;">№${i+1}</div>
+              </div>
+            `).join('')}
           </div>
+          <button onclick="downloadAllPhotos(${JSON.stringify(t.responsePhotos || [t.responsePhotoData])}, '${(w?w.short:'')}_${t.address.replace(/[^а-яА-Яa-zA-Z0-9]/g,'_')}')"
+            style="width:100%;margin-bottom:8px;background:var(--blue);color:white;border:none;border-radius:12px;padding:12px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;">
+            ⬇️ Скачать все фото (${t.responsePhotos ? t.responsePhotos.length : 1} шт.)
+          </button>
+          ${t.yaPhotoUrls ? `<a href="https://disk.yandex.ru/client/disk/Жилищник" target="_blank" style="display:block;width:100%;margin-bottom:8px;background:#FFCC00;color:#1A1A2E;border:none;border-radius:12px;padding:12px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;text-align:center;text-decoration:none;">📂 Открыть на Яндекс.Диске</a>` : ''}
         </div>
-        ` : `<div style="padding:10px 0;font-size:13px;color:var(--muted);">📋 № ${t.number || '—'} — ${t.problem || t.type_violation || '—'}</div>`}
+        ` : `<div style="padding:8px 0;font-size:13px;color:var(--muted);">📋 № ${t.number || '—'} — ${t.problem || t.type_violation || '—'}</div>`}
         <div class="ac-btns">
           <button class="ac-btn ac-approve" onclick="approveTask('${t.id}')">✅ Принято</button>
-          <button class="ac-btn ac-reject" onclick="rejectTask('${t.id}')">↩️ На доработку</button>
+          <button class="ac-btn ac-reject" onclick="rejectTask('${t.id}')">↩️ Доработать</button>
         </div>
-        ${t.type === 'portal' && t.hasPdf ? `<button class="delete-portal-btn" id="del-${t.id}" style="display:block;" onclick="deletePortal('${t.id}')">🗑️ Удалить PDF после закрытия</button>` : ''}
+        ${t.type === 'portal' && t.hasPdf ? `<button class="delete-portal-btn" style="display:block;margin-top:8px;" onclick="deletePortal('${t.id}')">🗑️ Удалить PDF</button>` : ''}
       `;
       approvalsEl.appendChild(card);
     });
   }
 
-  // All portals
+  // All portals sorted
   const portalsEl = document.getElementById('boss-portals');
   portalsEl.innerHTML = '';
-  tasks.filter(t => t.type === 'portal').forEach(t => {
+  const sortedPortals = sortByDeadline(tasks.filter(t => t.type === 'portal'));
+  sortedPortals.forEach(t => {
     const w = WORKERS.find(x => x.id === t.workerId);
     const colors = { new: '#E74C3C', done_pending: '#F39C12', done: '#1D9E75' };
     const labels = { new: '🔴 Активен', done_pending: '⏳ Проверка', done: '✅ Закрыт' };
+    const urgency = getUrgency(t.deadline);
     const item = document.createElement('div');
     item.className = 'portal-list-item';
     item.style.setProperty('--cc', colors[t.status] || '#ccc');
@@ -1342,29 +1791,37 @@ function showBossHome() {
       <div class="pli-body">
         <div class="pli-title">${t.address}</div>
         <div class="pli-sub">${w ? w.short : '—'} · № ${t.number || '—'}</div>
+        ${t.deadline ? `<div style="font-size:10px;font-weight:800;color:${urgency.color};margin-top:2px;">${urgency.icon} Срок: ${t.deadline}</div>` : ''}
       </div>
       <span class="pli-status" style="background:${colors[t.status]}22;color:${colors[t.status]}">${labels[t.status]}</span>
     `;
     portalsEl.appendChild(item);
   });
 
-  // All rakurs
+  // All rakurs sorted
   const rakursEl = document.getElementById('boss-rakurs');
   rakursEl.innerHTML = '';
-  tasks.filter(t => t.type === 'rakurs').forEach(t => {
+  const sortedRakurs = sortByDeadline(tasks.filter(t => t.type === 'rakurs'));
+  sortedRakurs.forEach(t => {
     const w = WORKERS.find(x => x.id === t.workerId);
     const colors = { new: '#E74C3C', done_pending: '#F39C12', done: '#1D9E75' };
     const labels = { new: '🔴 Не отработан', done_pending: '⏳ Проверка', done: '✅ Закрыт' };
+    const urgency = getUrgency(t.deadline);
     const item = document.createElement('div');
     item.className = 'portal-list-item';
     item.style.setProperty('--cc', colors[t.status] || '#ccc');
+    const hasPhoto = t.responsePhotoData;
     item.innerHTML = `
       <div class="pli-icon">📸</div>
       <div class="pli-body">
         <div class="pli-title">${t.address}</div>
         <div class="pli-sub">${w ? w.short : '—'} · ${t.type_violation || '—'}</div>
+        ${t.deadline ? `<div style="font-size:10px;font-weight:800;color:${urgency.color};margin-top:2px;">${urgency.icon} Срок: ${t.deadline}</div>` : ''}
       </div>
-      <span class="pli-status" style="background:${colors[t.status]}22;color:${colors[t.status]}">${labels[t.status]}</span>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+        <span class="pli-status" style="background:${colors[t.status]}22;color:${colors[t.status]}">${labels[t.status]}</span>
+        ${hasPhoto ? `<button onclick="downloadAllPhotos(${JSON.stringify(t.responsePhotos || [t.responsePhotoData])},'${(w?w.short:'')}_ракурс')" style="background:var(--blue);color:white;border:none;border-radius:8px;padding:4px 8px;font-family:'Nunito',sans-serif;font-size:11px;font-weight:800;cursor:pointer;">⬇️ ${t.responsePhotos ? t.responsePhotos.length + ' фото' : 'Фото'}</button>` : ''}
+      </div>
     `;
     rakursEl.appendChild(item);
   });
@@ -1499,6 +1956,7 @@ function renderPortalFeed(filter) {
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
         ${w ? `<span class="pfeed-worker-tag">🧹 ${w.short}</span>` : ''}
         ${isMyTask ? `<span style="background:#EBF5FB;color:#2980B9;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:800;">👆 Моя задача</span>` : ''}
+        ${t.isShared ? `<span style="background:#EBF5FB;color:#2980B9;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:800;">👥 Общая</span>` : ''}
         ${t.hasPdf ? `<span style="background:var(--blue-l);color:var(--blue);border-radius:20px;padding:3px 10px;font-size:11px;font-weight:800;">📄 PDF</span>` : ''}
       </div>
       ${isMyTask && t.status === 'new' ? `
@@ -1509,6 +1967,75 @@ function renderPortalFeed(filter) {
     `;
     list.appendChild(card);
   });
+}
+
+// ─── YANDEX DISK ───
+const YA_TOKEN = 'y0__wgBEPDltJkBGOmYQyDawcbqF3DtzCSEHVJQ9BYr58qOlkBKPrmA';
+const YA_FOLDER = 'disk:/Жилищник';
+
+async function yaEnsureFolder(path) {
+  try {
+    await fetch(`https://cloud-api.yandex.net/v1/disk/resources?path=${encodeURIComponent(path)}`, {
+      method: 'PUT',
+      headers: { 'Authorization': `OAuth ${YA_TOKEN}` }
+    });
+  } catch(e) {}
+}
+
+async function yaUploadFile(path, blob, contentType) {
+  try {
+    const res = await fetch(`https://cloud-api.yandex.net/v1/disk/resources/upload?path=${encodeURIComponent(path)}&overwrite=true`, {
+      headers: { 'Authorization': `OAuth ${YA_TOKEN}` }
+    });
+    const { href } = await res.json();
+    if (!href) return null;
+    await fetch(href, { method: 'PUT', body: blob, headers: { 'Content-Type': contentType } });
+    const pubRes = await fetch(`https://cloud-api.yandex.net/v1/disk/resources/publish?path=${encodeURIComponent(path)}`, {
+      method: 'PUT', headers: { 'Authorization': `OAuth ${YA_TOKEN}` }
+    });
+    const infoRes = await fetch(`https://cloud-api.yandex.net/v1/disk/resources?path=${encodeURIComponent(path)}&fields=public_url`, {
+      headers: { 'Authorization': `OAuth ${YA_TOKEN}` }
+    });
+    const info = await infoRes.json();
+    return info.public_url || path;
+  } catch(e) {
+    console.error('Ya upload error:', e);
+    return null;
+  }
+}
+
+function dataURLtoBlob(dataurl) {
+  const arr = dataurl.split(',');
+  const mime = arr[0].match(/:(.*?);/)[1];
+  const bstr = atob(arr[1]);
+  let n = bstr.length;
+  const u8arr = new Uint8Array(n);
+  while(n--) u8arr[n] = bstr.charCodeAt(n);
+  return new Blob([u8arr], { type: mime });
+}
+
+async function uploadPhotosToYaDisk(photos, workerName, address, taskId) {
+  await yaEnsureFolder(YA_FOLDER);
+  const subfolder = `${YA_FOLDER}/${taskId}_${address.replace(/[^а-яА-Яa-zA-Z0-9]/g,'_').slice(0,30)}`;
+  await yaEnsureFolder(subfolder);
+  const urls = [];
+  for (let i = 0; i < photos.length; i++) {
+    showToast(`📤 Загружаю фото ${i+1}/${photos.length}...`);
+    const blob = dataURLtoBlob(photos[i]);
+    const filename = `${workerName}_фото${i+1}_${Date.now()}.jpg`;
+    const url = await yaUploadFile(`${subfolder}/${filename}`, blob, 'image/jpeg');
+    urls.push(url || photos[i]);
+  }
+  return urls;
+}
+
+async function uploadPdfToYaDisk(pdfData, pdfName, taskId) {
+  await yaEnsureFolder(YA_FOLDER);
+  const subfolder = `${YA_FOLDER}/PDF`;
+  await yaEnsureFolder(subfolder);
+  const blob = dataURLtoBlob(pdfData);
+  const url = await yaUploadFile(`${subfolder}/${taskId}_${pdfName}`, blob, 'application/pdf');
+  return url;
 }
 
 // ─── INIT ───
