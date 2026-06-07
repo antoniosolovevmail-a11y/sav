@@ -800,17 +800,82 @@ body {
   <div class="bottom-nav" id="worker-nav">
     <div class="nav-item active" id="nav-home" onclick="switchTab('home')">
       <div class="nav-icon">🏠</div>
-      <div class="nav-label">Мои задачи</div>
+      <div class="nav-label">Задачи</div>
     </div>
     <div class="nav-item" id="nav-all" onclick="switchTab('all')">
       <div class="nav-icon">🚪</div>
-      <div class="nav-label">Все порталы</div>
+      <div class="nav-label">Порталы</div>
+    </div>
+    <div class="nav-item" id="nav-sections" onclick="switchTab('sections')">
+      <div class="nav-icon">📋</div>
+      <div class="nav-label">Разделы</div>
     </div>
     <div class="nav-item" onclick="logout()">
       <div class="nav-icon">👋</div>
       <div class="nav-label">Выйти</div>
     </div>
   </div>
+</div>
+
+<!-- ═══ SCREEN: SECTIONS ═══ -->
+<div id="screen-sections" class="screen">
+  <div style="background:linear-gradient(135deg,#2C3E50,#1A1A2E);padding:24px 20px 70px;position:relative;overflow:hidden;">
+    <div style="font-size:22px;font-weight:900;color:white;">📋 Разделы</div>
+    <div style="font-size:13px;color:rgba(255,255,255,0.5);margin-top:4px;">Выбери нужный раздел</div>
+    <div style="position:absolute;bottom:-30px;left:-20px;right:-20px;height:60px;background:var(--bg);border-radius:50%;"></div>
+  </div>
+  <div style="padding:16px 16px 100px;margin-top:-20px;">
+
+    <!-- ЦККБ -->
+    <div onclick="openSection('tskkb')" style="background:var(--white);border-radius:var(--radius);padding:18px;margin-bottom:12px;box-shadow:var(--shadow);display:flex;align-items:center;gap:14px;cursor:pointer;border-left:5px solid #E74C3C;">
+      <div style="font-size:36px;">🔍</div>
+      <div style="flex:1;">
+        <div style="font-size:16px;font-weight:800;color:var(--ink);">ЦККБ</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px;">Замечания от инспектора</div>
+        <div id="tskkb-count" style="font-size:11px;font-weight:800;color:#E74C3C;margin-top:4px;"></div>
+      </div>
+      <div style="color:var(--muted);font-size:20px;">›</div>
+    </div>
+
+    <!-- Мониторы -->
+    <div onclick="openSection('monitors')" style="background:var(--white);border-radius:var(--radius);padding:18px;margin-bottom:12px;box-shadow:var(--shadow);display:flex;align-items:center;gap:14px;cursor:pointer;border-left:5px solid #2980B9;">
+      <div style="font-size:36px;">🖥️</div>
+      <div style="flex:1;">
+        <div style="font-size:16px;font-weight:800;color:var(--ink);">Мониторы</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px;">Нарушения из системы мониторинга</div>
+        <div id="monitors-count" style="font-size:11px;font-weight:800;color:#2980B9;margin-top:4px;"></div>
+      </div>
+      <div style="color:var(--muted);font-size:20px;">›</div>
+    </div>
+
+    <!-- Фото от начальства -->
+    <div onclick="openSection('boss-photos')" style="background:var(--white);border-radius:var(--radius);padding:18px;margin-bottom:12px;box-shadow:var(--shadow);display:flex;align-items:center;gap:14px;cursor:pointer;border-left:5px solid #1D9E75;">
+      <div style="font-size:36px;">📸</div>
+      <div style="flex:1;">
+        <div style="font-size:16px;font-weight:800;color:var(--ink);">Фото от начальства</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px;">Инструкции и фото от руководителя</div>
+        <div id="boss-photos-count" style="font-size:11px;font-weight:800;color:#1D9E75;margin-top:4px;"></div>
+      </div>
+      <div style="color:var(--muted);font-size:20px;">›</div>
+    </div>
+
+  </div>
+  <div class="bottom-nav">
+    <div class="nav-item" onclick="switchTab('home')"><div class="nav-icon">🏠</div><div class="nav-label">Задачи</div></div>
+    <div class="nav-item" onclick="switchTab('all')"><div class="nav-icon">🚪</div><div class="nav-label">Порталы</div></div>
+    <div class="nav-item active"><div class="nav-icon">📋</div><div class="nav-label">Разделы</div></div>
+    <div class="nav-item" onclick="logout()"><div class="nav-icon">👋</div><div class="nav-label">Выйти</div></div>
+  </div>
+</div>
+
+<!-- ═══ SCREEN: SECTION DETAIL ═══ -->
+<div id="screen-section-detail" class="screen">
+  <div class="topbar">
+    <div class="topbar-back" onclick="showScreen('screen-sections')">←</div>
+    <div class="topbar-title" id="section-detail-title">Раздел</div>
+    <div id="section-new-count" style="background:var(--red);color:white;font-size:11px;font-weight:800;padding:4px 10px;border-radius:20px;display:none;"></div>
+  </div>
+  <div style="padding:12px 16px 100px;" id="section-detail-content"></div>
 </div>
 
 <!-- ═══ SCREEN: ALL PORTALS ═══ -->
@@ -1042,9 +1107,12 @@ body {
       <!-- Тип задачи -->
       <div style="margin-bottom:12px;">
         <div style="font-size:12px;font-weight:800;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;">Тип</div>
-        <div style="display:flex;gap:8px;">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
           <button class="ftab active" id="add-type-portal" onclick="setAddType('portal',this)">🚪 Портал</button>
           <button class="ftab" id="add-type-rakurs" onclick="setAddType('rakurs',this)">📸 Ракурс</button>
+          <button class="ftab" id="add-type-tskkb" onclick="setAddType('tskkb',this)">🔍 ЦККБ</button>
+          <button class="ftab" id="add-type-monitors" onclick="setAddType('monitors',this)">🖥️ Монитор</button>
+          <button class="ftab" id="add-type-boss-photos" onclick="setAddType('boss-photos',this)">📸 Фото нач.</button>
         </div>
       </div>
 
@@ -1663,10 +1731,12 @@ let newPdfName = null;
 let newRakursPhotos = []; // массив фото замечания от начальника
 function setAddType(type, btn) {
   addType = type;
-  document.querySelectorAll('#add-type-portal,#add-type-rakurs').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('#add-type-portal,#add-type-rakurs,#add-type-tskkb,#add-type-monitors,#add-type-boss-photos')
+    .forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   document.getElementById('add-pdf-section').style.display = type === 'portal' ? 'block' : 'none';
-  document.getElementById('add-rakurs-photo-section').style.display = type === 'rakurs' ? 'block' : 'none';
+  document.getElementById('add-rakurs-photo-section').style.display =
+    ['rakurs','tskkb','monitors','boss-photos'].includes(type) ? 'block' : 'none';
 }
 
 function setAssignType(type, btn) {
@@ -1748,25 +1818,33 @@ function addTask() {
     const id = 't' + Date.now() + (wId || 'all') + Math.random().toString(36).slice(2,5);
     const task = { id, address, problem, number, deadline, status: 'new', type: addType };
     if (wId) task.workerId = wId;
-    else task.isShared = true; // видна всем
+    else task.isShared = true;
 
     if (addType === 'portal') {
       task.title = 'Закрыть портал';
       task.message = '';
       if (newPdfData) {
-        task.hasPdf = true;
-        task.pdfName = newPdfName;
-        task.pdfData = newPdfData;
+        task.hasPdf = true; task.pdfName = newPdfName; task.pdfData = newPdfData;
         uploadPdfToYaDisk(newPdfData, newPdfName, id).then(url => {
           if (url) { task.yaPdfUrl = url; saveTasks(); showToast('📄 PDF загружен на Яндекс.Диск!'); }
         });
       }
-    } else {
+    } else if (addType === 'rakurs') {
       task.type_violation = problem;
       task.title = 'Отработать ракурс';
       if (newRakursPhotos.length > 0) {
         task.origPhotos = [...newRakursPhotos];
-        task.origPhotoData = newRakursPhotos[0]; // backward compat
+        task.origPhotoData = newRakursPhotos[0];
+      }
+    } else {
+      // ЦККБ, мониторы, фото от начальства
+      task.sectionType = addType;
+      task.type = 'section';
+      task.title = addType === 'tskkb' ? 'Замечание ЦККБ' :
+                   addType === 'monitors' ? 'Монитор' : 'Фото от начальства';
+      if (newRakursPhotos.length > 0) {
+        task.origPhotos = [...newRakursPhotos];
+        task.origPhotoData = newRakursPhotos[0];
       }
     }
     return task;
@@ -2030,17 +2108,139 @@ function formatDate(d) {
 
 // ─── TAB SWITCHING ───
 function switchTab(tab) {
+  ['nav-home','nav-all','nav-sections'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('active');
+  });
   if (tab === 'home') {
     showScreen('screen-worker');
     if (currentUser?.worker) showWorkerHome(currentUser.worker);
-    document.getElementById('nav-home').classList.add('active');
-    document.getElementById('nav-all').classList.remove('active');
-  } else {
+    document.getElementById('nav-home')?.classList.add('active');
+  } else if (tab === 'all') {
     showAllPortals();
-    document.getElementById('nav-home').classList.remove('active');
-    document.getElementById('nav-all').classList.add('active');
+    document.getElementById('nav-all')?.classList.add('active');
+  } else if (tab === 'sections') {
+    showSections();
+    document.getElementById('nav-sections')?.classList.add('active');
   }
 }
+
+// ─── SECTIONS ───
+const SECTION_CONFIG = {
+  tskkb: {
+    title: 'ЦККБ',
+    icon: '🔍',
+    color: '#E74C3C',
+    desc: 'Замечания от инспектора ЦККБ',
+    type: 'tskkb',
+  },
+  monitors: {
+    title: 'Мониторы',
+    icon: '🖥️',
+    color: '#2980B9',
+    desc: 'Нарушения из системы мониторинга',
+    type: 'monitors',
+  },
+  'boss-photos': {
+    title: 'Фото от начальства',
+    icon: '📸',
+    color: '#1D9E75',
+    desc: 'Инструкции и фото от руководителя',
+    type: 'boss-photos',
+  },
+};
+
+function showSections() {
+  showScreen('screen-sections');
+  // Update counts
+  ['tskkb','monitors','boss-photos'].forEach(type => {
+    const items = tasks.filter(t => t.sectionType === type &&
+      (!t.workerId || t.workerId === currentUser?.id || t.isShared));
+    const newCount = items.filter(t => t.status === 'new').length;
+    const el = document.getElementById(`${type}-count`);
+    if (el) el.textContent = newCount > 0 ? `🔴 ${newCount} новых` : items.length > 0 ? `✅ ${items.length} записей` : 'Нет записей';
+  });
+}
+
+function openSection(type) {
+  const cfg = SECTION_CONFIG[type];
+  document.getElementById('section-detail-title').textContent = `${cfg.icon} ${cfg.title}`;
+  const items = tasks.filter(t => t.sectionType === type &&
+    (!t.workerId || t.workerId === currentUser?.id || t.isShared));
+  const newItems = items.filter(t => t.status === 'new').length;
+
+  const countEl = document.getElementById('section-new-count');
+  if (newItems > 0) {
+    countEl.style.display = 'block';
+    countEl.textContent = newItems + ' новых';
+  } else {
+    countEl.style.display = 'none';
+  }
+
+  const content = document.getElementById('section-detail-content');
+
+  if (items.length === 0) {
+    content.innerHTML = `
+      <div style="text-align:center;padding:60px 20px;color:var(--muted);">
+        <div style="font-size:48px;margin-bottom:12px;">${cfg.icon}</div>
+        <div style="font-size:16px;font-weight:800;">Нет записей</div>
+        <div style="font-size:13px;margin-top:6px;">${cfg.desc}</div>
+      </div>`;
+  } else {
+    content.innerHTML = items.map(t => {
+      const w = getAllWorkers().find(x => x.id === t.workerId);
+      const urgency = getUrgency(t.deadline);
+      const photos = t.origPhotos || (t.origPhotoData ? [t.origPhotoData] : []);
+      return `
+        <div style="background:var(--white);border-radius:var(--radius);padding:16px;margin-bottom:12px;box-shadow:var(--shadow);border-left:5px solid ${cfg.color};">
+          <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;">
+            <div style="font-size:22px;">${cfg.icon}</div>
+            <div style="flex:1;">
+              <div style="font-size:14px;font-weight:800;color:var(--ink);">${t.address}</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:2px;">${t.problem || t.type_violation || '—'}</div>
+              ${t.deadline ? `<div style="font-size:10px;font-weight:800;color:${urgency.color};margin-top:3px;">${urgency.icon} Срок: ${t.deadline}</div>` : ''}
+            </div>
+            <span style="font-size:10px;font-weight:800;padding:3px 8px;border-radius:10px;background:${t.status==='new'?'#FDEDEC':t.status==='done_pending'?'#FEF9E7':'#E8F8F3'};color:${t.status==='new'?'#E74C3C':t.status==='done_pending'?'#F39C12':'#1D9E75'};">
+              ${t.status==='new'?'🔴 Новое':t.status==='done_pending'?'⏳ На проверке':'✅ Готово'}
+            </span>
+          </div>
+          ${photos.length > 0 ? `
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px;">
+              ${photos.map((src, i) => `
+                <div style="aspect-ratio:1;border-radius:8px;overflow:hidden;cursor:zoom-in;" onclick="openFullscreen(getSectionPhotos('${t.id}'),${i})">
+                  <img src="${src}" style="width:100%;height:100%;object-fit:cover;">
+                </div>
+              `).join('')}
+            </div>` : ''}
+          ${t.note ? `<div style="font-size:12px;color:var(--muted);background:var(--bg);padding:8px;border-radius:8px;margin-bottom:8px;">${t.note}</div>` : ''}
+          ${t.status === 'new' && type !== 'boss-photos' ? `
+            <button onclick="markSectionDone('${t.id}')"
+              style="width:100%;background:var(--green);color:white;border:none;border-radius:12px;padding:12px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;">
+              ✅ Выполнено
+            </button>` : ''}
+        </div>
+      `;
+    }).join('');
+  }
+
+  showScreen('screen-section-detail');
+}
+
+function getSectionPhotos(taskId) {
+  const t = tasks.find(x => x.id === taskId);
+  return t ? (t.origPhotos || (t.origPhotoData ? [t.origPhotoData] : [])) : [];
+}
+
+function markSectionDone(id) {
+  const t = tasks.find(x => x.id === id);
+  if (!t) return;
+  t.status = 'done_pending';
+  saveTasks();
+  showToast('✅ Отправлено на проверку!');
+  openSection(t.sectionType);
+}
+
+// ─── TAB SWITCHING (old, keep for portal screen back) ───
 
 // ─── ALL PORTALS FEED ───
 let currentFilter = 'all';
