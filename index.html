@@ -1127,6 +1127,49 @@ body {
     <button class="action-btn" style="margin-top:10px;background:var(--bg);color:var(--muted);" onclick="logout()">
       👋 Выйти
     </button>
+
+    <!-- ─── ДОБАВИТЬ ДВОРНИКА ─── -->
+    <div class="section-title" style="margin-top:24px;">👤 Добавить дворника</div>
+    <div style="background:var(--white);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);margin-bottom:10px;">
+
+      <div style="margin-bottom:12px;">
+        <div style="font-size:12px;font-weight:800;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;">Имя и фамилия</div>
+        <input id="nw-name" placeholder="Иванов Иван" style="width:100%;border:2px solid var(--line);border-radius:12px;padding:12px;font-family:'Nunito',sans-serif;font-size:14px;outline:none;">
+      </div>
+
+      <div style="margin-bottom:12px;">
+        <div style="font-size:12px;font-weight:800;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;">Короткое имя (для списка)</div>
+        <input id="nw-short" placeholder="Иван" style="width:100%;border:2px solid var(--line);border-radius:12px;padding:12px;font-family:'Nunito',sans-serif;font-size:14px;outline:none;">
+      </div>
+
+      <div style="margin-bottom:12px;">
+        <div style="font-size:12px;font-weight:800;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;">Телефон</div>
+        <input id="nw-phone" placeholder="8 900 000 0000" type="tel" style="width:100%;border:2px solid var(--line);border-radius:12px;padding:12px;font-family:'Nunito',sans-serif;font-size:14px;outline:none;">
+      </div>
+
+      <div style="margin-bottom:12px;">
+        <div style="font-size:12px;font-weight:800;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;">Роль</div>
+        <div style="display:flex;gap:8px;">
+          <button class="ftab active" id="nw-role-worker" onclick="setNwRole('worker',this)">🧹 Дворник</button>
+          <button class="ftab" id="nw-role-brigadier" onclick="setNwRole('brigadier',this)">⭐ Бригадир</button>
+        </div>
+      </div>
+
+      <div style="margin-bottom:12px;">
+        <div style="font-size:12px;font-weight:800;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;">Адреса (через запятую)</div>
+        <textarea id="nw-addresses" placeholder="ул. Юннатов 6к1, ул. Мишина 4, ПР 25А" rows="3" style="width:100%;border:2px solid var(--line);border-radius:12px;padding:12px;font-family:'Nunito',sans-serif;font-size:13px;outline:none;resize:none;"></textarea>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px;">Или выбери из списка участка:</div>
+        <div id="nw-address-grid" style="margin-top:8px;max-height:200px;overflow-y:auto;display:grid;grid-template-columns:1fr 1fr;gap:6px;"></div>
+      </div>
+
+      <button class="action-btn btn-done" onclick="addNewWorker()">
+        ➕ Добавить дворника
+      </button>
+    </div>
+
+    <!-- ─── СПИСОК ДВОРНИКОВ ─── -->
+    <div class="section-title">🧹 Список дворников</div>
+    <div id="boss-workers-list"></div>
   </div>
 </div>
 
@@ -1218,13 +1261,11 @@ function saveTasks() {
 function buildWorkerGrid() {
   const grid = document.getElementById('worker-grid');
   grid.innerHTML = '';
-  WORKERS.forEach(w => {
+  getAllWorkers().forEach(w => {
     const btn = document.createElement('div');
     btn.className = 'worker-btn';
     btn.dataset.id = w.id;
-    // Show first word of last name
-    const displayName = w.short;
-    btn.innerHTML = `<span class="wb-emoji">${w.emoji}</span><span class="wb-name">${displayName}</span>`;
+    btn.innerHTML = `<span class="wb-emoji">${w.role === 'brigadier' ? '⭐' : w.emoji}</span><span class="wb-name">${w.short}</span>`;
     btn.onclick = () => selectWorker(w.id, btn);
     grid.appendChild(btn);
   });
@@ -1239,7 +1280,7 @@ function selectWorker(id, el) {
 
 function loginWorker() {
   if (!currentUser) return;
-  const w = WORKERS.find(x => x.id === currentUser.id);
+  const w = getAllWorkers().find(x => x.id === currentUser.id);
   currentUser.worker = w;
   showWorkerHome(w);
 }
@@ -1585,7 +1626,7 @@ async function sendRakurs() {
     return;
   }
   const t = tasks.find(x => x.id === currentTaskId);
-  const w = WORKERS.find(x => x.id === t.workerId);
+  const w = getAllWorkers().find(x => x.id === t.workerId);
   const sendBtn = document.getElementById('rakurs-send-btn');
   sendBtn.disabled = true;
   sendBtn.textContent = '⏳ Загружаю на Яндекс.Диск...';
@@ -1685,10 +1726,10 @@ function handlePdfUpload(e) {
 function populateWorkerSelect() {
   const sel = document.getElementById('add-worker');
   sel.innerHTML = '<option value="">— выбери дворника —</option>';
-  WORKERS.forEach(w => {
+  getAllWorkers().forEach(w => {
     const opt = document.createElement('option');
     opt.value = w.id;
-    opt.textContent = w.name;
+    opt.textContent = w.name + (w.role === 'brigadier' ? ' ⭐' : '');
     sel.appendChild(opt);
   });
 }
@@ -1737,7 +1778,7 @@ function addTask() {
     showToast('✅ Общая задача добавлена для всех!');
   } else {
     tasks.push(makeTask(workerId));
-    const w = WORKERS.find(x => x.id === workerId);
+    const w = getAllWorkers().find(x => x.id === workerId);
     showToast(`✅ Задача назначена: ${w ? w.short : ''}!`);
   }
 
@@ -1810,6 +1851,8 @@ function showBossHome() {
   showScreen('screen-boss');
   document.getElementById('boss-date').textContent = formatDate(new Date());
   populateWorkerSelect();
+  buildAddressGrid();
+  renderWorkersList();
 
   const active = tasks.filter(t => t.status === 'new').length;
   const pending = tasks.filter(t => t.status === 'done_pending').length;
@@ -1827,7 +1870,7 @@ function showBossHome() {
     approvalsEl.innerHTML = '<div style="text-align:center;padding:16px;color:var(--muted);font-size:14px;font-weight:700;">Нет заявок на проверке</div>';
   } else {
     pending_tasks.forEach(t => {
-      const w = WORKERS.find(x => x.id === t.workerId);
+      const w = getAllWorkers().find(x => x.id === t.workerId);
       const card = document.createElement('div');
       card.className = 'approval-card';
       const urgency = getUrgency(t.deadline);
@@ -1878,7 +1921,7 @@ function showBossHome() {
   portalsEl.innerHTML = '';
   const sortedPortals = sortByDeadline(tasks.filter(t => t.type === 'portal'));
   sortedPortals.forEach(t => {
-    const w = WORKERS.find(x => x.id === t.workerId);
+    const w = getAllWorkers().find(x => x.id === t.workerId);
     const colors = { new: '#E74C3C', done_pending: '#F39C12', done: '#1D9E75' };
     const labels = { new: '🔴 Активен', done_pending: '⏳ Проверка', done: '✅ Закрыт' };
     const urgency = getUrgency(t.deadline);
@@ -1902,7 +1945,7 @@ function showBossHome() {
   rakursEl.innerHTML = '';
   const sortedRakurs = sortByDeadline(tasks.filter(t => t.type === 'rakurs'));
   sortedRakurs.forEach(t => {
-    const w = WORKERS.find(x => x.id === t.workerId);
+    const w = getAllWorkers().find(x => x.id === t.workerId);
     const colors = { new: '#E74C3C', done_pending: '#F39C12', done: '#1D9E75' };
     const labels = { new: '🔴 Не отработан', done_pending: '⏳ Проверка', done: '✅ Закрыт' };
     const urgency = getUrgency(t.deadline);
@@ -1931,7 +1974,7 @@ function approveTask(id) {
   t.status = 'done';
   saveTasks();
   showToast('✅ Принято!');
-  const w = WORKERS.find(x => x.id === t.workerId);
+  const w = getAllWorkers().find(x => x.id === t.workerId);
   sendNotification('✅ Принято начальником!', `${t.address} — ${w ? w.short : ''}`, id);
   showBossHome();
 }
@@ -1943,7 +1986,7 @@ function rejectTask(id) {
   t.responsePhotos = null;
   saveTasks();
   showToast('↩️ Отправлено на доработку');
-  const w = WORKERS.find(x => x.id === t.workerId);
+  const w = getAllWorkers().find(x => x.id === t.workerId);
   sendNotification('↩️ Нужно переделать', `${t.address} — проверь задачу`, id);
   showBossHome();
 }
@@ -2038,7 +2081,7 @@ function renderPortalFeed(filter) {
   const labels = { new: '🔴 Активен', done_pending: '⏳ Проверка', done: '✅ Закрыт' };
 
   portals.forEach(t => {
-    const w = WORKERS.find(x => x.id === t.workerId);
+    const w = getAllWorkers().find(x => x.id === t.workerId);
     const card = document.createElement('div');
     card.className = 'pfeed-card';
     card.style.setProperty('--cc', colors[t.status] || '#ccc');
@@ -2187,6 +2230,132 @@ async function uploadPdfToYaDisk(pdfData, pdfName, taskId) {
   const blob = dataURLtoBlob(pdfData);
   const url = await yaUploadFile(`${subfolder}/${taskId}_${pdfName}`, blob, 'application/pdf');
   return url;
+}
+
+// ─── WORKERS MANAGEMENT ───
+let customWorkers = JSON.parse(localStorage.getItem('savelo_workers') || '[]');
+let nwRole = 'worker';
+
+function getAllWorkers() {
+  return [...WORKERS, ...customWorkers];
+}
+
+function saveCustomWorkers() {
+  localStorage.setItem('savelo_workers', JSON.stringify(customWorkers));
+}
+
+function setNwRole(role, btn) {
+  nwRole = role;
+  document.querySelectorAll('#nw-role-worker,#nw-role-brigadier').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+const ALL_ADDRESSES = [
+  'ВМ 2','ВМ 4,6','ВМ 8,10,12','ВМ 16','ВМ 20','ВМ 22','ВМ 24','ВМ 28','ВМ 28к2',
+  'ПР 3/1','ПР 5','ПР 7','ПР 9с1','ПР 11А','ПР 13к1,13к2','ПР 15','ПР 17','ПР 17А',
+  'ПР 25А','ПР 25к1,25к2','ПР 25к3',
+  'СПР 3','СПР 5-13','СПР 6к1','СПР 6к2,6к3','СПР 15-17',
+  'Мишина 4','Мишина 16','Мишина 22','Мишина 23','Мишина 26','Мишина 27,29',
+  'Мишина 28','Мишина 34к1,34к2','Мишина 38','Мишина 39','Мишина 42',
+  'Юн 6к1,6к2','Юн 7','Юн 8А','Юн 14,14А','Юн 15к1,15к2','Юн 17к1-17к4',
+  'Мир 3,5','Мир 4','Мир 8к1,8к2,8к3','Мир 16к1,16к2',
+  '8М 2/10к1,к2,к3','8М 6','8М 8к1,к2',
+];
+
+let selectedAddresses = new Set();
+
+function buildAddressGrid() {
+  const grid = document.getElementById('nw-address-grid');
+  if (!grid) return;
+  selectedAddresses = new Set();
+  grid.innerHTML = ALL_ADDRESSES.map(addr => `
+    <div onclick="toggleAddr(this,'${addr}')"
+      style="padding:6px 10px;border-radius:8px;border:1.5px solid var(--line);font-size:11px;font-weight:700;cursor:pointer;background:var(--white);text-align:center;transition:all 0.15s;"
+      data-addr="${addr}">
+      ${addr}
+    </div>
+  `).join('');
+}
+
+function toggleAddr(el, addr) {
+  if (selectedAddresses.has(addr)) {
+    selectedAddresses.delete(addr);
+    el.style.background = 'var(--white)';
+    el.style.borderColor = 'var(--line)';
+    el.style.color = 'var(--ink)';
+  } else {
+    selectedAddresses.add(addr);
+    el.style.background = 'var(--green)';
+    el.style.borderColor = 'var(--green)';
+    el.style.color = 'white';
+  }
+  // Sync to textarea
+  document.getElementById('nw-addresses').value = [...selectedAddresses].join(', ');
+}
+
+function addNewWorker() {
+  const name  = document.getElementById('nw-name').value.trim();
+  const short = document.getElementById('nw-short').value.trim();
+  const phone = document.getElementById('nw-phone').value.trim();
+  const addrsText = document.getElementById('nw-addresses').value.trim();
+
+  if (!name) { showToast('Введи имя дворника!'); return; }
+
+  const newId = 100 + customWorkers.length + Date.now() % 1000;
+  const addresses = addrsText ? addrsText.split(',').map(a => a.trim()).filter(Boolean) : [];
+
+  const worker = {
+    id: newId,
+    name,
+    short: short || name.split(' ')[0],
+    phone: phone || '—',
+    emoji: '🧹',
+    role: nwRole,
+    addresses,
+    custom: true,
+  };
+
+  customWorkers.push(worker);
+  saveCustomWorkers();
+
+  // Reset form
+  document.getElementById('nw-name').value = '';
+  document.getElementById('nw-short').value = '';
+  document.getElementById('nw-phone').value = '';
+  document.getElementById('nw-addresses').value = '';
+  buildAddressGrid();
+
+  showToast(`✅ ${worker.short} добавлен!`);
+  buildWorkerGrid();
+  renderWorkersList();
+  populateWorkerSelect();
+}
+
+function removeWorker(id) {
+  if (!confirm('Удалить этого дворника?')) return;
+  customWorkers = customWorkers.filter(w => w.id !== id);
+  saveCustomWorkers();
+  renderWorkersList();
+  buildWorkerGrid();
+  populateWorkerSelect();
+  showToast('🗑️ Дворник удалён');
+}
+
+function renderWorkersList() {
+  const el = document.getElementById('boss-workers-list');
+  if (!el) return;
+  const all = getAllWorkers();
+  el.innerHTML = all.map(w => `
+    <div style="background:var(--white);border-radius:16px;padding:12px 14px;margin-bottom:8px;box-shadow:var(--shadow);display:flex;align-items:center;gap:10px;">
+      <div style="font-size:22px;">${w.role === 'brigadier' ? '⭐' : '🧹'}</div>
+      <div style="flex:1;">
+        <div style="font-size:13px;font-weight:800;color:var(--ink);">${w.name}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:1px;">${w.phone || '—'}</div>
+        ${w.addresses?.length ? `<div style="font-size:10px;color:var(--green-d);margin-top:2px;font-weight:700;">📍 ${w.addresses.slice(0,3).join(', ')}${w.addresses.length>3?'...':''}</div>` : ''}
+      </div>
+      ${w.custom ? `<button onclick="removeWorker(${w.id})" style="background:var(--red-l);color:var(--red);border:none;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:800;cursor:pointer;">✕</button>` : ''}
+    </div>
+  `).join('');
 }
 
 // ─── PWA: INSTALL ───
