@@ -745,24 +745,68 @@ body {
 
 <!-- ═══ SCREEN: LOGIN ═══ -->
 <div id="screen-login" class="screen active">
-  <div class="login-logo">🧹</div>
-  <div class="login-title">Жилищник</div>
+  <div class="login-logo" style="font-size:80px;">🧹</div>
+  <div class="login-title" style="font-size:32px;">Жилищник</div>
   <div class="login-sub">Савеловский район</div>
 
   <div class="login-box">
     <div class="login-label">Кто ты?</div>
-    <div class="worker-grid" id="worker-grid">
-      <!-- filled by JS -->
-    </div>
+    <div class="worker-grid" id="worker-grid"></div>
     <button class="go-btn" id="go-btn" onclick="loginWorker()">Войти 👉</button>
     <div class="login-or">— или —</div>
-    <button class="boss-btn" onclick="loginBoss()">👔 Я начальник</button>
-
-    <!-- PWA Install button -->
+    <button class="boss-btn" onclick="loginBoss()">👔 Я начальник / бригадир</button>
     <button id="install-btn" onclick="installPWA()" style="display:none;margin-top:12px;width:100%;background:rgba(255,255,255,0.15);color:white;border:2px solid rgba(255,255,255,0.4);border-radius:14px;padding:13px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;">
-      📲 Установить на экран телефона
+      📲 Установить на телефон
     </button>
   </div>
+</div>
+
+<!-- ═══ SCREEN: SIMPLE WORKER HOME ═══ -->
+<div id="screen-simple-worker" class="screen">
+  <!-- Big green header -->
+  <div style="background:linear-gradient(135deg,#0F6E56,#1D9E75);padding:30px 20px 90px;position:relative;overflow:hidden;">
+    <div style="position:absolute;bottom:-30px;left:-20px;right:-20px;height:60px;background:var(--bg);border-radius:50%;"></div>
+    <div style="font-size:15px;color:rgba(255,255,255,0.7);font-weight:700;">Привет 👋</div>
+    <div style="font-size:30px;font-weight:900;color:white;margin-top:4px;" id="sw-name">—</div>
+    <div style="font-size:14px;color:rgba(255,255,255,0.6);margin-top:4px;" id="sw-date"></div>
+    <!-- Task counter badge -->
+    <div id="sw-badge" style="display:none;position:absolute;top:20px;right:20px;background:#E74C3C;color:white;font-size:22px;font-weight:900;width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(0,0,0,0.3);"></div>
+  </div>
+
+  <div style="padding:16px 16px 120px;margin-top:-20px;">
+
+    <!-- TODAY'S TASKS — big cards -->
+    <div id="sw-no-tasks" style="display:none;text-align:center;padding:40px 20px;">
+      <div style="font-size:64px;margin-bottom:12px;">🎉</div>
+      <div style="font-size:22px;font-weight:900;color:var(--ink);">Всё сделано!</div>
+      <div style="font-size:15px;color:var(--muted);margin-top:6px;">На сегодня задач нет</div>
+    </div>
+
+    <div id="sw-tasks"></div>
+
+  </div>
+
+  <!-- Big bottom nav — 3 buttons -->
+  <div style="position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:white;border-top:1px solid var(--line);padding:12px 16px 24px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;z-index:200;">
+    <button onclick="swTab('tasks')" id="sw-btn-tasks" style="background:var(--green);color:white;border:none;border-radius:16px;padding:14px 8px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;">
+      <span style="font-size:24px;">📋</span>Задачи
+    </button>
+    <button onclick="swTab('portals')" id="sw-btn-portals" style="background:var(--bg);color:var(--ink);border:none;border-radius:16px;padding:14px 8px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;">
+      <span style="font-size:24px;">🚪</span>Порталы
+    </button>
+    <button onclick="logout()" style="background:var(--bg);color:var(--muted);border:none;border-radius:16px;padding:14px 8px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;">
+      <span style="font-size:24px;">👋</span>Выйти
+    </button>
+  </div>
+</div>
+
+<!-- ═══ SCREEN: SIMPLE TASK DETAIL ═══ -->
+<div id="screen-simple-task" class="screen">
+  <div class="topbar">
+    <div class="topbar-back" onclick="showSimpleWorkerHome(currentUser.worker)">←</div>
+    <div class="topbar-title" id="st-title">Задача</div>
+  </div>
+  <div style="padding:16px 16px 100px;" id="st-content"></div>
 </div>
 
 <!-- ═══ SCREEN: WORKER HOME ═══ -->
@@ -1458,12 +1502,13 @@ function saveTasks() {
 // ─── LOGIN ───
 function buildWorkerGrid() {
   const grid = document.getElementById('worker-grid');
+  grid.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;';
   grid.innerHTML = '';
   getAllWorkers().forEach(w => {
     const btn = document.createElement('div');
     btn.className = 'worker-btn';
     btn.dataset.id = w.id;
-    btn.innerHTML = `<span class="wb-emoji">${w.role === 'brigadier' ? '⭐' : w.emoji}</span><span class="wb-name">${w.short}</span>`;
+    btn.innerHTML = `<span class="wb-emoji">${w.role==='brigadier'?'⭐':'🧹'}</span><span class="wb-name">${w.short}</span>`;
     btn.onclick = () => selectWorker(w.id, btn);
     grid.appendChild(btn);
   });
@@ -1483,7 +1528,7 @@ function loginWorker() {
   if (w && w.role === 'brigadier') {
     showBrigadierHome(w);
   } else {
-    showWorkerHome(w);
+    showSimpleWorkerHome(w);
   }
 }
 
@@ -2609,6 +2654,313 @@ async function uploadPdfToYaDisk(pdfData, pdfName, taskId) {
   const blob = dataURLtoBlob(pdfData);
   const url = await yaUploadFile(`${subfolder}/${taskId}_${pdfName}`, blob, 'application/pdf');
   return url;
+}
+
+// ─── SIMPLE WORKER HOME ───
+let swCurrentTab = 'tasks';
+
+function showSimpleWorkerHome(w) {
+  showScreen('screen-simple-worker');
+  document.getElementById('sw-name').textContent = w.name;
+  document.getElementById('sw-date').textContent = formatDate(new Date());
+  swCurrentTab = 'tasks';
+  swRenderTasks(w);
+}
+
+function swTab(tab) {
+  swCurrentTab = tab;
+  const w = currentUser?.worker;
+  document.getElementById('sw-btn-tasks').style.background = tab==='tasks' ? 'var(--green)' : 'var(--bg)';
+  document.getElementById('sw-btn-tasks').style.color = tab==='tasks' ? 'white' : 'var(--ink)';
+  document.getElementById('sw-btn-portals').style.background = tab==='portals' ? 'var(--green)' : 'var(--bg)';
+  document.getElementById('sw-btn-portals').style.color = tab==='portals' ? 'white' : 'var(--ink)';
+  swRenderTasks(w);
+}
+
+function swRenderTasks(w) {
+  const container = document.getElementById('sw-tasks');
+  const noTasks = document.getElementById('sw-no-tasks');
+  const badge = document.getElementById('sw-badge');
+
+  let myTasks = tasks.filter(t => t.workerId === w.id || t.isShared);
+
+  if (swCurrentTab === 'portals') {
+    myTasks = tasks.filter(t => t.type === 'portal');
+  }
+
+  // Active tasks only (not done)
+  const active = myTasks.filter(t => t.status !== 'done');
+  const sorted = sortByDeadline(active);
+
+  // Badge
+  const newCount = active.filter(t => t.status === 'new').length;
+  if (newCount > 0) {
+    badge.style.display = 'flex';
+    badge.textContent = newCount;
+  } else {
+    badge.style.display = 'none';
+  }
+
+  if (sorted.length === 0) {
+    noTasks.style.display = 'block';
+    container.innerHTML = '';
+    return;
+  }
+  noTasks.style.display = 'none';
+
+  container.innerHTML = sorted.map(t => {
+    const typeInfo = swGetTypeInfo(t);
+    const urgency = getUrgency(t.deadline);
+    const isPending = t.status === 'done_pending';
+
+    return `
+      <div onclick="swOpenTask('${t.id}')" style="
+        background:var(--white);border-radius:24px;padding:20px;margin-bottom:14px;
+        box-shadow:0 4px 20px rgba(0,0,0,0.08);
+        border-left:6px solid ${isPending ? '#F39C12' : typeInfo.color};
+        cursor:pointer;active:transform:scale(0.98);
+      ">
+        <!-- Type icon + status -->
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+          <div style="width:54px;height:54px;border-radius:16px;background:${typeInfo.color}22;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;">
+            ${typeInfo.icon}
+          </div>
+          <div style="flex:1;">
+            <div style="font-size:18px;font-weight:900;color:var(--ink);line-height:1.2;">${typeInfo.label}</div>
+            <div style="font-size:13px;color:var(--muted);margin-top:2px;">📍 ${t.address}</div>
+          </div>
+          <div style="font-size:24px;">${isPending ? '⏳' : '▶️'}</div>
+        </div>
+
+        <!-- Problem description — BIG text -->
+        <div style="background:${typeInfo.color}11;border-radius:12px;padding:12px;margin-bottom:10px;">
+          <div style="font-size:14px;font-weight:700;color:var(--ink);line-height:1.5;">${t.problem || t.type_violation || '—'}</div>
+        </div>
+
+        <!-- Deadline -->
+        ${t.deadline ? `
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span style="font-size:16px;">${urgency.icon}</span>
+            <span style="font-size:13px;font-weight:800;color:${urgency.color};">Срок: ${t.deadline}</span>
+          </div>
+        ` : ''}
+
+        ${isPending ? `
+          <div style="background:#FEF9E7;border-radius:10px;padding:10px;margin-top:8px;font-size:13px;font-weight:700;color:#9A6D00;">
+            ⏳ Отправлено начальнику — ждём проверки
+          </div>` : ''}
+
+        <!-- CTA -->
+        ${t.status === 'new' ? `
+          <div style="margin-top:12px;background:${typeInfo.color};color:white;border-radius:14px;padding:14px;text-align:center;font-size:16px;font-weight:900;">
+            ${typeInfo.action} →
+          </div>` : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+function swGetTypeInfo(t) {
+  if (t.type === 'portal') return { icon:'🚪', color:'#E74C3C', label:'Закрой заявку', action:'Открыть заявку' };
+  if (t.type === 'rakurs') return { icon:'📸', color:'#1D9E75', label:'Сфотографируй', action:'Сделать фото' };
+  if (t.sectionType === 'tskkb') return { icon:'🔍', color:'#9B59B6', label:'Замечание ЦККБ', action:'Посмотреть' };
+  if (t.sectionType === 'monitors') return { icon:'🖥️', color:'#2980B9', label:'Монитор', action:'Посмотреть' };
+  if (t.sectionType === 'boss-photos') return { icon:'📸', color:'#1D9E75', label:'Фото от начальства', action:'Посмотреть' };
+  return { icon:'📋', color:'#999', label:'Задача', action:'Открыть' };
+}
+
+function swOpenTask(id) {
+  const t = tasks.find(x => x.id === id);
+  if (!t) return;
+  const typeInfo = swGetTypeInfo(t);
+  currentTaskId = id;
+
+  document.getElementById('st-title').textContent = typeInfo.label;
+
+  const origPhotos = t.origPhotos || (t.origPhotoData ? [t.origPhotoData] : []);
+  const urgency = getUrgency(t.deadline);
+
+  let content = `
+    <!-- Address block -->
+    <div style="background:var(--white);border-radius:20px;padding:18px;margin-bottom:14px;box-shadow:var(--shadow);">
+      <div style="font-size:13px;color:var(--muted);font-weight:700;margin-bottom:4px;">📍 АДРЕС</div>
+      <div style="font-size:20px;font-weight:900;color:var(--ink);">${t.address}</div>
+      ${t.deadline?`<div style="font-size:14px;font-weight:800;color:${urgency.color};margin-top:6px;">${urgency.icon} Срок: ${t.deadline}</div>`:''}
+    </div>
+
+    <!-- Problem block -->
+    <div style="background:${typeInfo.color}15;border-radius:20px;padding:18px;margin-bottom:14px;">
+      <div style="font-size:13px;color:var(--muted);font-weight:700;margin-bottom:6px;">⚠️ ЧТО НУЖНО СДЕЛАТЬ</div>
+      <div style="font-size:17px;font-weight:800;color:var(--ink);line-height:1.5;">${t.problem || t.type_violation || '—'}</div>
+    </div>
+  `;
+
+  // Show boss photos if any
+  if (origPhotos.length > 0) {
+    content += `
+      <div style="background:var(--white);border-radius:20px;padding:18px;margin-bottom:14px;box-shadow:var(--shadow);">
+        <div style="font-size:13px;color:var(--muted);font-weight:700;margin-bottom:10px;">📸 ФОТО ОТ НАЧАЛЬНИКА — смотри сюда</div>
+        <div style="display:grid;grid-template-columns:${origPhotos.length===1?'1fr':'1fr 1fr'};gap:8px;">
+          ${origPhotos.map((src,i) => `
+            <div onclick="openFullscreen(swGetOrigPhotos(),${i})" style="border-radius:14px;overflow:hidden;cursor:zoom-in;aspect-ratio:4/3;">
+              <img src="${src}" style="width:100%;height:100%;object-fit:cover;">
+            </div>
+          `).join('')}
+        </div>
+        <div style="font-size:12px;color:var(--muted);text-align:center;margin-top:8px;font-weight:700;">👆 Нажми на фото чтобы увеличить</div>
+      </div>
+    `;
+  }
+
+  // PDF
+  if (t.hasPdf) {
+    content += `
+      <div onclick="togglePdf()" style="background:var(--blue-l);border-radius:20px;padding:18px;margin-bottom:14px;cursor:pointer;display:flex;align-items:center;gap:14px;">
+        <span style="font-size:36px;">📄</span>
+        <div>
+          <div style="font-size:16px;font-weight:900;color:var(--blue);">Открыть документ</div>
+          <div style="font-size:12px;color:var(--muted);">${t.pdfName||'Документ.pdf'}</div>
+        </div>
+      </div>
+    `;
+  }
+
+  // Action buttons — BIG
+  if (t.type === 'portal' && t.status === 'new') {
+    content += `
+      <button onclick="swMarkPortalDone()" style="width:100%;background:var(--green);color:white;border:none;border-radius:20px;padding:22px;font-family:'Nunito',sans-serif;font-size:20px;font-weight:900;cursor:pointer;margin-bottom:10px;box-shadow:0 6px 20px rgba(29,158,117,0.4);">
+        ✅ Я закрыл заявку в «Наш город»
+      </button>
+      <button onclick="showToast('Сообщение отправлено 📨')" style="width:100%;background:var(--red-l);color:var(--red);border:2px solid var(--red);border-radius:20px;padding:18px;font-family:'Nunito',sans-serif;font-size:17px;font-weight:900;cursor:pointer;">
+        ❗ Есть проблема — сообщить
+      </button>
+    `;
+  } else if (t.type === 'rakurs' && t.status === 'new') {
+    content += `
+      <!-- Photo upload — SUPER BIG -->
+      <div style="background:var(--white);border-radius:20px;padding:18px;margin-bottom:14px;box-shadow:var(--shadow);">
+        <div style="font-size:14px;font-weight:800;color:var(--muted);margin-bottom:10px;">📷 ТВОЁ ФОТО (с того же места)</div>
+        <div id="sw-photo-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;min-height:60px;"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <label style="background:var(--green);color:white;border-radius:16px;padding:18px;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:900;font-size:16px;">
+            📷<span>Камера</span>
+            <input type="file" accept="image/*" capture="environment" style="display:none;" onchange="swAddPhoto(event)">
+          </label>
+          <label style="background:var(--blue);color:white;border-radius:16px;padding:18px;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:900;font-size:16px;">
+            🖼️<span>Галерея</span>
+            <input type="file" accept="image/*" multiple style="display:none;" onchange="swAddPhotos(event)">
+          </label>
+        </div>
+      </div>
+      <button onclick="swSendRakurs()" style="width:100%;background:var(--green);color:white;border:none;border-radius:20px;padding:22px;font-family:'Nunito',sans-serif;font-size:20px;font-weight:900;cursor:pointer;box-shadow:0 6px 20px rgba(29,158,117,0.4);">
+        📤 Отправить фото начальнику
+      </button>
+    `;
+  } else if (t.status === 'done_pending') {
+    content += `
+      <div style="background:#FEF9E7;border-radius:20px;padding:20px;text-align:center;">
+        <div style="font-size:48px;margin-bottom:8px;">⏳</div>
+        <div style="font-size:20px;font-weight:900;color:#9A6D00;">Ждём проверки начальника</div>
+      </div>`;
+  } else if (t.status === 'done') {
+    content += `
+      <div style="background:var(--green-l);border-radius:20px;padding:20px;text-align:center;">
+        <div style="font-size:48px;margin-bottom:8px;">✅</div>
+        <div style="font-size:20px;font-weight:900;color:var(--green-d);">Принято! Молодец!</div>
+      </div>`;
+  }
+
+  document.getElementById('st-content').innerHTML = content;
+  window.swGetOrigPhotos = () => origPhotos;
+  swPhotos = [];
+  swRenderPhotoGrid();
+  showScreen('screen-simple-task');
+}
+
+let swPhotos = [];
+
+function swAddPhoto(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  compressAndAddSW([file]);
+  e.target.value = '';
+}
+
+function swAddPhotos(e) {
+  const files = Array.from(e.target.files);
+  if (!files.length) return;
+  compressAndAddSW(files);
+  e.target.value = '';
+}
+
+function compressAndAddSW(files) {
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX = 1200;
+        let w = img.width, h = img.height;
+        if (w > MAX) { h = h*MAX/w; w = MAX; }
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        swPhotos.push(canvas.toDataURL('image/jpeg', 0.7));
+        swRenderPhotoGrid();
+        showToast(`📷 Фото ${swPhotos.length} добавлено!`);
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function swRenderPhotoGrid() {
+  const grid = document.getElementById('sw-photo-grid');
+  if (!grid) return;
+  if (swPhotos.length === 0) {
+    grid.innerHTML = '<div style="grid-column:span 3;text-align:center;padding:16px;color:var(--muted);font-size:14px;font-weight:700;">Нажми 📷 чтобы добавить фото</div>';
+    return;
+  }
+  grid.innerHTML = swPhotos.map((src, i) => `
+    <div style="position:relative;aspect-ratio:1;border-radius:12px;overflow:hidden;cursor:zoom-in;" onclick="openFullscreen(swPhotos,${i})">
+      <img src="${src}" style="width:100%;height:100%;object-fit:cover;">
+      <button onclick="event.stopPropagation();swPhotos.splice(${i},1);swRenderPhotoGrid()" style="position:absolute;top:4px;right:4px;background:rgba(231,76,60,0.9);color:white;border:none;border-radius:50%;width:24px;height:24px;font-size:13px;cursor:pointer;">✕</button>
+    </div>
+  `).join('') + (swPhotos.length < 9 ? `
+    <label style="aspect-ratio:1;border-radius:12px;border:2px dashed var(--green);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:24px;">
+      ➕<input type="file" accept="image/*" capture="environment" style="display:none;" onchange="swAddPhoto(event)">
+    </label>` : '');
+}
+
+async function swSendRakurs() {
+  if (swPhotos.length === 0) { showToast('Сначала добавь фото! 📷'); return; }
+  const t = tasks.find(x => x.id === currentTaskId);
+  const w = currentUser?.worker;
+  const btn = document.querySelector('#st-content button:last-child');
+  if (btn) { btn.textContent = '⏳ Отправляю...'; btn.disabled = true; }
+  try {
+    const yaUrls = await uploadPhotosToYaDisk(swPhotos, w?w.short:'дворник', t.address, t.id);
+    t.status = 'done_pending';
+    t.responsePhotos = [...swPhotos];
+    t.responsePhotoData = swPhotos[0];
+    t.yaPhotoUrls = yaUrls;
+  } catch(e) {
+    t.status = 'done_pending';
+    t.responsePhotos = [...swPhotos];
+    t.responsePhotoData = swPhotos[0];
+  }
+  saveTasks();
+  showToast(`🎉 ${swPhotos.length} фото отправлено!`);
+  setTimeout(() => showSimpleWorkerHome(currentUser.worker), 1200);
+}
+
+function swMarkPortalDone() {
+  const t = tasks.find(x => x.id === currentTaskId);
+  t.status = 'done_pending';
+  saveTasks();
+  showToast('✅ Отправлено начальнику!');
+  setTimeout(() => showSimpleWorkerHome(currentUser.worker), 1000);
 }
 
 // ─── RAKURS TRACKER ───
