@@ -1067,6 +1067,49 @@ body {
   </div>
 </div>
 
+<!-- ═══ SCREEN: RAKURS TRACKER ═══ -->
+<div id="screen-rakurs-tracker" class="screen">
+  <div class="topbar" style="background:#E07B2B;">
+    <div class="topbar-back" onclick="showBossHome()">←</div>
+    <div class="topbar-title">📸 Трекер ракурсов</div>
+    <div id="tracker-stats" style="font-size:12px;color:rgba(255,255,255,0.85);font-weight:800;margin-left:auto;"></div>
+  </div>
+
+  <div style="padding:12px 16px 100px;">
+
+    <!-- Filter + Search -->
+    <div style="display:flex;gap:8px;margin-bottom:12px;">
+      <input id="tracker-search" placeholder="🔍 Поиск по адресу..." oninput="filterTracker()"
+        style="flex:1;border:2px solid var(--line);border-radius:12px;padding:10px 12px;font-family:'Nunito',sans-serif;font-size:13px;outline:none;">
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:14px;overflow-x:auto;padding-bottom:4px;">
+      <button class="ftab active" data-tf="all" onclick="setTrackerFilter('all',this)">Все</button>
+      <button class="ftab" data-tf="new" onclick="setTrackerFilter('new',this)">🔴 Не отработано</button>
+      <button class="ftab" data-tf="done_pending" onclick="setTrackerFilter('done_pending',this)">⏳ На проверке</button>
+      <button class="ftab" data-tf="done" onclick="setTrackerFilter('done',this)">✅ Отработано</button>
+    </div>
+
+    <!-- Progress bar -->
+    <div style="background:var(--white);border-radius:16px;padding:14px 16px;margin-bottom:14px;box-shadow:var(--shadow);">
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+        <span style="font-size:13px;font-weight:800;color:var(--ink);">Общий прогресс</span>
+        <span style="font-size:13px;font-weight:800;color:var(--green);" id="tracker-pct">0%</span>
+      </div>
+      <div style="background:var(--line);border-radius:8px;height:12px;overflow:hidden;">
+        <div id="tracker-progress-bar" style="height:12px;background:linear-gradient(90deg,#1D9E75,#27C48F);border-radius:8px;transition:width 0.4s;width:0%;"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:11px;color:var(--muted);">
+        <span id="tracker-done-count">✅ 0 отработано</span>
+        <span id="tracker-left-count">🔴 0 осталось</span>
+      </div>
+    </div>
+
+    <!-- Rakurs list -->
+    <div id="tracker-list"></div>
+
+  </div>
+</div>
+
 <!-- ═══ SCREEN: BRIGADIER ═══ -->
 <div id="screen-brigadier" class="screen">
   <div style="background:linear-gradient(135deg,#7F3FBF,#5B2D8A);padding:28px 20px 80px;position:relative;overflow:hidden;">
@@ -1159,7 +1202,15 @@ body {
     <div class="section-title">🚪 Все порталы</div>
     <div id="boss-portals"></div>
 
-    <div class="section-title">📸 Все ракурсы</div>
+    <div class="section-title">📸 Ракурсы</div>
+    <div onclick="showRakursTracker()" style="background:var(--white);border-radius:var(--radius);padding:16px;margin-bottom:10px;box-shadow:var(--shadow);display:flex;align-items:center;gap:14px;cursor:pointer;border-left:5px solid #E07B2B;">
+      <div style="font-size:36px;">📸</div>
+      <div style="flex:1;">
+        <div style="font-size:15px;font-weight:800;color:var(--ink);">Трекер ракурсов</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px;" id="rakurs-tracker-summary">Загрузка...</div>
+      </div>
+      <div style="color:var(--muted);font-size:20px;">›</div>
+    </div>
     <div id="boss-rakurs"></div>
 
     <!-- ADD TASK FORM -->
@@ -2057,6 +2108,8 @@ function showBossHome() {
   buildAddressGrid();
   renderWorkersList();
   buildBrigadierGrid();
+  // Update rakurs tracker summary
+  setTimeout(() => renderTracker(), 50);
 
   const active = tasks.filter(t => t.status === 'new').length;
   const pending = tasks.filter(t => t.status === 'done_pending').length;
@@ -2556,6 +2609,143 @@ async function uploadPdfToYaDisk(pdfData, pdfName, taskId) {
   const blob = dataURLtoBlob(pdfData);
   const url = await yaUploadFile(`${subfolder}/${taskId}_${pdfName}`, blob, 'application/pdf');
   return url;
+}
+
+// ─── RAKURS TRACKER ───
+let trackerFilter = 'all';
+let trackerSearch = '';
+
+function showRakursTracker() {
+  showScreen('screen-rakurs-tracker');
+  renderTracker();
+}
+
+function setTrackerFilter(f, btn) {
+  trackerFilter = f;
+  document.querySelectorAll('[data-tf]').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTracker();
+}
+
+function filterTracker() {
+  trackerSearch = document.getElementById('tracker-search').value.toLowerCase();
+  renderTracker();
+}
+
+function renderTracker() {
+  const allRakurs = tasks.filter(t => t.type === 'rakurs');
+  const total = allRakurs.length;
+  const done = allRakurs.filter(t => t.status === 'done').length;
+  const pending = allRakurs.filter(t => t.status === 'done_pending').length;
+  const newCount = allRakurs.filter(t => t.status === 'new').length;
+  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+
+  // Update stats
+  document.getElementById('tracker-stats').textContent = `${done}/${total}`;
+  document.getElementById('tracker-pct').textContent = pct + '%';
+  document.getElementById('tracker-progress-bar').style.width = pct + '%';
+  document.getElementById('tracker-done-count').textContent = `✅ ${done} отработано`;
+  document.getElementById('tracker-left-count').textContent = `🔴 ${newCount} осталось`;
+
+  // Update summary in boss screen
+  const sumEl = document.getElementById('rakurs-tracker-summary');
+  if (sumEl) sumEl.textContent = `${done}/${total} отработано · ${newCount} ожидают · ${pending} на проверке`;
+
+  // Filter
+  let filtered = allRakurs;
+  if (trackerFilter !== 'all') filtered = filtered.filter(t => t.status === trackerFilter);
+  if (trackerSearch) filtered = filtered.filter(t =>
+    (t.address||'').toLowerCase().includes(trackerSearch) ||
+    (t.type_violation||'').toLowerCase().includes(trackerSearch)
+  );
+
+  // Sort: new first, then pending, then done
+  filtered = sortByDeadline(filtered);
+
+  const list = document.getElementById('tracker-list');
+  if (!list) return;
+
+  if (filtered.length === 0) {
+    list.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--muted);">
+      <div style="font-size:40px;margin-bottom:8px;">🎉</div>
+      <div style="font-size:15px;font-weight:800;">Ничего не найдено</div>
+    </div>`;
+    return;
+  }
+
+  const colors = { new: '#E74C3C', done_pending: '#F39C12', done: '#1D9E75' };
+  const labels = { new: '🔴 Не отработан', done_pending: '⏳ На проверке', done: '✅ Отработан' };
+  const icons  = { new: '🔴', done_pending: '⏳', done: '✅' };
+
+  list.innerHTML = filtered.map((t, idx) => {
+    const w = getAllWorkers().find(x => x.id === t.workerId);
+    const urgency = getUrgency(t.deadline);
+    const hasPhotos = t.responsePhotos?.length || t.responsePhotoData;
+    const origPhotos = t.origPhotos || (t.origPhotoData ? [t.origPhotoData] : []);
+
+    return `
+      <div style="background:var(--white);border-radius:16px;padding:14px;margin-bottom:8px;box-shadow:var(--shadow);border-left:5px solid ${colors[t.status]||'#ccc'};">
+
+        <!-- Header row -->
+        <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;">
+          <div style="background:${colors[t.status]}22;color:${colors[t.status]};font-size:11px;font-weight:800;padding:4px 8px;border-radius:20px;white-space:nowrap;">
+            ${icons[t.status]} №${idx+1}
+          </div>
+          <div style="flex:1;">
+            <div style="font-size:13px;font-weight:800;color:var(--ink);">${t.address}</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:1px;">${t.type_violation||t.problem||'—'}</div>
+          </div>
+          <div style="text-align:right;">
+            ${t.deadline?`<div style="font-size:10px;font-weight:800;color:${urgency.color};">${urgency.icon} ${t.deadline}</div>`:''}
+            ${w?`<div style="font-size:10px;color:var(--muted);margin-top:2px;">🧹 ${w.short}</div>`:'<div style="font-size:10px;color:var(--muted);">👥 Общая</div>'}
+          </div>
+        </div>
+
+        <!-- Photos row: orig + response side by side -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;">
+          <!-- Фото замечания -->
+          <div>
+            <div style="font-size:9px;font-weight:800;color:var(--muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.5px;">Замечание</div>
+            ${origPhotos.length > 0 ? `
+              <div style="position:relative;aspect-ratio:4/3;border-radius:8px;overflow:hidden;cursor:zoom-in;" onclick="openFullscreen(getOrigPhotos('${t.id}'),0)">
+                <img src="${origPhotos[0]}" style="width:100%;height:100%;object-fit:cover;">
+                ${origPhotos.length>1?`<div style="position:absolute;bottom:3px;right:4px;background:rgba(0,0,0,0.6);color:white;font-size:9px;font-weight:800;padding:2px 6px;border-radius:8px;">+${origPhotos.length-1}</div>`:''}
+                <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;opacity:0;background:rgba(0,0,0,0.3);transition:0.15s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0">
+                  <span style="color:white;font-size:18px;">🔍</span>
+                </div>
+              </div>
+            ` : `<div style="aspect-ratio:4/3;border-radius:8px;background:var(--bg);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:11px;font-weight:700;">Нет фото</div>`}
+          </div>
+          <!-- Фото отработки -->
+          <div>
+            <div style="font-size:9px;font-weight:800;color:var(--muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.5px;">Отработка</div>
+            ${hasPhotos ? `
+              <div style="position:relative;aspect-ratio:4/3;border-radius:8px;overflow:hidden;cursor:zoom-in;" onclick="openTaskPhoto('${t.id}',0)">
+                <img src="${t.responsePhotos?.[0]||t.responsePhotoData}" style="width:100%;height:100%;object-fit:cover;">
+                ${(t.responsePhotos?.length||0)>1?`<div style="position:absolute;bottom:3px;right:4px;background:rgba(0,0,0,0.6);color:white;font-size:9px;font-weight:800;padding:2px 6px;border-radius:8px;">+${t.responsePhotos.length-1}</div>`:''}
+              </div>
+            ` : `<div style="aspect-ratio:4/3;border-radius:8px;background:${t.status==='new'?'#FFF0F0':'var(--bg)'};border:2px dashed ${t.status==='new'?'#E74C3C':'var(--line)'};display:flex;align-items:center;justify-content:center;color:${t.status==='new'?'#E74C3C':'var(--muted)'};font-size:11px;font-weight:800;">${t.status==='new'?'⏳ Ждём':'—'}</div>`}
+          </div>
+        </div>
+
+        <!-- Actions for boss -->
+        ${t.status === 'done_pending' ? `
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+            <button onclick="approveTask('${t.id}');renderTracker()" style="background:var(--green);color:white;border:none;border-radius:10px;padding:10px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer;">✅ Принять</button>
+            <button onclick="rejectTask('${t.id}');renderTracker()" style="background:var(--red-l);color:var(--red);border:none;border-radius:10px;padding:10px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer;">↩️ Доработать</button>
+          </div>
+        ` : ''}
+        ${t.status === 'done' && hasPhotos ? `
+          <button onclick="downloadAllPhotos(getTaskPhotos('${t.id}'),'${(w?w.short:'')}_ракурс')" style="width:100%;background:var(--blue);color:white;border:none;border-radius:10px;padding:9px;font-family:'Nunito',sans-serif;font-size:12px;font-weight:800;cursor:pointer;margin-top:4px;">⬇️ Скачать фото</button>
+        ` : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+function getOrigPhotos(taskId) {
+  const t = tasks.find(x => x.id === taskId);
+  return t ? (t.origPhotos || (t.origPhotoData ? [t.origPhotoData] : [])) : [];
 }
 
 // ─── BRIGADIER ───
