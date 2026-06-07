@@ -1119,19 +1119,29 @@ body {
       <!-- Кому назначить -->
       <div style="margin-bottom:12px;">
         <div style="font-size:12px;font-weight:800;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;">Кому назначить</div>
-        <div style="display:flex;gap:8px;margin-bottom:10px;">
-          <button class="ftab active" id="assign-personal" onclick="setAssignType('personal',this)" style="flex:1;">👤 Лично дворнику</button>
-          <button class="ftab" id="assign-all" onclick="setAssignType('all',this)" style="flex:1;">👥 Общая задача</button>
+        <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+          <button class="ftab active" id="assign-personal" onclick="setAssignType('personal',this)">👤 Одному</button>
+          <button class="ftab" id="assign-multi" onclick="setAssignType('multi',this)">👥 Нескольким</button>
+          <button class="ftab" id="assign-all" onclick="setAssignType('all',this)">🌐 Всем</button>
         </div>
-        <!-- Personal: выбор дворника -->
+
+        <!-- ONE: выбор одного -->
         <div id="worker-select-wrap">
           <select id="add-worker" style="width:100%;border:2px solid var(--line);border-radius:12px;padding:12px;font-family:'Nunito',sans-serif;font-size:14px;outline:none;background:white;">
             <option value="">— выбери дворника —</option>
           </select>
         </div>
-        <!-- All: пояснение -->
+
+        <!-- MULTI: чекбоксы -->
+        <div id="worker-multi-wrap" style="display:none;">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:8px;">Отметь нужных дворников:</div>
+          <div id="worker-checkboxes" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;max-height:220px;overflow-y:auto;"></div>
+          <div id="multi-selected-count" style="font-size:12px;font-weight:800;color:var(--green);margin-top:6px;"></div>
+        </div>
+
+        <!-- ALL: пояснение -->
         <div id="all-workers-info" style="display:none;background:var(--green-l);border-radius:12px;padding:12px;font-size:13px;color:var(--green-d);font-weight:700;">
-          👥 Задача будет видна всем дворникам в разделе «Все порталы». Любой может взять и выполнить.
+          🌐 Задача будет видна всем дворникам в разделе «Все порталы».
         </div>
       </div>
 
@@ -1725,10 +1735,12 @@ async function sendRakurs() {
 
 // ─── ADD TASK ───
 let addType = 'portal';
-let assignType = 'personal'; // 'personal' | 'all'
+let assignType = 'personal';
 let newPdfData = null;
 let newPdfName = null;
-let newRakursPhotos = []; // массив фото замечания от начальника
+let newRakursPhotos = [];
+let selectedWorkerIds = new Set(); // для мультивыбора дворников
+
 function setAddType(type, btn) {
   addType = type;
   document.querySelectorAll('#add-type-portal,#add-type-rakurs,#add-type-tskkb,#add-type-monitors,#add-type-boss-photos')
@@ -1741,10 +1753,12 @@ function setAddType(type, btn) {
 
 function setAssignType(type, btn) {
   assignType = type;
-  document.querySelectorAll('#assign-personal,#assign-all').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('#assign-personal,#assign-multi,#assign-all').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   document.getElementById('worker-select-wrap').style.display = type === 'personal' ? 'block' : 'none';
+  document.getElementById('worker-multi-wrap').style.display = type === 'multi' ? 'block' : 'none';
   document.getElementById('all-workers-info').style.display = type === 'all' ? 'block' : 'none';
+  if (type === 'multi') buildWorkerCheckboxes();
 }
 
 function handleRakursPhotoUpload(e) {
@@ -1791,6 +1805,37 @@ function handlePdfUpload(e) {
   const reader = new FileReader();
   reader.onload = ev => { newPdfData = ev.target.result; };
   reader.readAsDataURL(file);
+}
+
+function buildWorkerCheckboxes() {
+  selectedWorkerIds = new Set();
+  const container = document.getElementById('worker-checkboxes');
+  const countEl = document.getElementById('multi-selected-count');
+  container.innerHTML = getAllWorkers().map(w => `
+    <div id="wcheck-${w.id}" onclick="toggleWorkerCheck(${w.id})"
+      style="padding:8px 10px;border-radius:10px;border:2px solid var(--line);cursor:pointer;display:flex;align-items:center;gap:6px;background:var(--white);transition:all 0.15s;">
+      <div style="font-size:18px;">${w.role === 'brigadier' ? '⭐' : '🧹'}</div>
+      <div style="font-size:12px;font-weight:700;color:var(--ink);line-height:1.2;">${w.short}</div>
+    </div>
+  `).join('');
+  countEl.textContent = '';
+}
+
+function toggleWorkerCheck(id) {
+  const el = document.getElementById(`wcheck-${id}`);
+  if (selectedWorkerIds.has(id)) {
+    selectedWorkerIds.delete(id);
+    el.style.background = 'var(--white)';
+    el.style.borderColor = 'var(--line)';
+  } else {
+    selectedWorkerIds.add(id);
+    el.style.background = 'var(--green)';
+    el.style.borderColor = 'var(--green)';
+    el.querySelectorAll('div').forEach(d => d.style.color = 'white');
+  }
+  const count = selectedWorkerIds.size;
+  document.getElementById('multi-selected-count').textContent =
+    count > 0 ? `✅ Выбрано: ${count} чел.` : '';
 }
 
 function populateWorkerSelect() {
@@ -1851,10 +1896,15 @@ function addTask() {
   };
 
   if (assignType === 'all') {
-    // Создаём одну общую задачу без workerId
     tasks.push(makeTask(null));
     showToast('✅ Общая задача добавлена для всех!');
+  } else if (assignType === 'multi') {
+    if (selectedWorkerIds.size === 0) { showToast('Выбери хотя бы одного дворника!'); return; }
+    selectedWorkerIds.forEach(wId => tasks.push(makeTask(wId)));
+    const names = [...selectedWorkerIds].map(id => getAllWorkers().find(w => w.id === id)?.short || '').join(', ');
+    showToast(`✅ Задача назначена: ${names}!`);
   } else {
+    if (!workerId) { showToast('Выбери дворника!'); return; }
     tasks.push(makeTask(workerId));
     const w = getAllWorkers().find(x => x.id === workerId);
     showToast(`✅ Задача назначена: ${w ? w.short : ''}!`);
@@ -1871,6 +1921,8 @@ function addTask() {
   document.getElementById('pdf-upload-label').textContent = 'Нажми чтобы загрузить PDF';
   document.getElementById('rakurs-photo-label').textContent = 'Нажми чтобы добавить фото замечания';
   document.getElementById('rakurs-photo-preview-grid').style.display = 'none';
+  selectedWorkerIds = new Set();
+  if (document.getElementById('worker-checkboxes')) buildWorkerCheckboxes();
   newPdfData = null; newPdfName = null; newRakursPhotos = [];
 
   showBossHome();
