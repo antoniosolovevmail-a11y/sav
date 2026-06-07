@@ -1067,6 +1067,68 @@ body {
   </div>
 </div>
 
+<!-- ═══ SCREEN: BRIGADIER ═══ -->
+<div id="screen-brigadier" class="screen">
+  <div style="background:linear-gradient(135deg,#7F3FBF,#5B2D8A);padding:28px 20px 80px;position:relative;overflow:hidden;">
+    <div style="position:absolute;bottom:-30px;left:-20px;right:-20px;height:60px;background:var(--bg);border-radius:50%;"></div>
+    <div style="font-size:13px;color:rgba(255,255,255,0.6);">Бригадир</div>
+    <div style="font-size:26px;font-weight:900;color:white;margin-top:2px;" id="brig-name">—</div>
+    <div style="font-size:13px;color:rgba(255,255,255,0.5);margin-top:3px;" id="brig-date"></div>
+    <div style="position:absolute;right:20px;top:20px;font-size:44px;">⭐</div>
+  </div>
+
+  <div style="padding:12px 16px 100px;margin-top:-20px;">
+
+    <!-- Stats -->
+    <div class="stats-row">
+      <div class="stat-box">
+        <div class="stat-num red" id="brig-stat-new">0</div>
+        <div class="stat-label">Активных</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num yellow" id="brig-stat-pending">0</div>
+        <div class="stat-label">На проверке</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num green" id="brig-stat-done">0</div>
+        <div class="stat-label">Закрыто</div>
+      </div>
+    </div>
+
+    <!-- Мои задачи -->
+    <div class="section-title">📋 Мои задачи</div>
+    <div id="brig-my-tasks"></div>
+
+    <!-- Все задачи бригады -->
+    <div class="section-title" style="margin-top:16px;">👥 Задачи бригады</div>
+    <div id="brig-all-tasks"></div>
+
+    <!-- Ожидают одобрения — только просмотр -->
+    <div class="section-title" style="margin-top:16px;">⏳ На проверке у начальника</div>
+    <div id="brig-pending"></div>
+
+  </div>
+
+  <div class="bottom-nav">
+    <div class="nav-item active" onclick="showBrigadierHome(currentUser.worker)">
+      <div class="nav-icon">🏠</div>
+      <div class="nav-label">Главная</div>
+    </div>
+    <div class="nav-item" onclick="showAllPortalsBrig()">
+      <div class="nav-icon">🚪</div>
+      <div class="nav-label">Порталы</div>
+    </div>
+    <div class="nav-item" onclick="switchTab('sections')">
+      <div class="nav-icon">📋</div>
+      <div class="nav-label">Разделы</div>
+    </div>
+    <div class="nav-item" onclick="logout()">
+      <div class="nav-icon">👋</div>
+      <div class="nav-label">Выйти</div>
+    </div>
+  </div>
+</div>
+
 <!-- ═══ SCREEN: BOSS ═══ -->
 <div id="screen-boss" class="screen">
   <div class="boss-header">
@@ -1205,6 +1267,13 @@ body {
     <button class="action-btn" style="margin-top:10px;background:var(--bg);color:var(--muted);" onclick="logout()">
       👋 Выйти
     </button>
+
+    <!-- ─── БРИГАДИРЫ ─── -->
+    <div class="section-title" style="margin-top:24px;">⭐ Назначить бригадиров</div>
+    <div style="background:var(--white);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);margin-bottom:10px;">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px;font-weight:600;">Выбери кто из дворников будет бригадиром — они видят все задачи бригады</div>
+      <div id="brigadier-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"></div>
+    </div>
 
     <!-- ─── ДОБАВИТЬ ДВОРНИКА ─── -->
     <div class="section-title" style="margin-top:24px;">👤 Добавить дворника</div>
@@ -1360,7 +1429,11 @@ function loginWorker() {
   if (!currentUser) return;
   const w = getAllWorkers().find(x => x.id === currentUser.id);
   currentUser.worker = w;
-  showWorkerHome(w);
+  if (w && w.role === 'brigadier') {
+    showBrigadierHome(w);
+  } else {
+    showWorkerHome(w);
+  }
 }
 
 function loginBoss() {
@@ -1983,6 +2056,7 @@ function showBossHome() {
   populateWorkerSelect();
   buildAddressGrid();
   renderWorkersList();
+  buildBrigadierGrid();
 
   const active = tasks.filter(t => t.status === 'new').length;
   const pending = tasks.filter(t => t.status === 'done_pending').length;
@@ -2484,6 +2558,120 @@ async function uploadPdfToYaDisk(pdfData, pdfName, taskId) {
   return url;
 }
 
+// ─── BRIGADIER ───
+function showBrigadierHome(w) {
+  showScreen('screen-brigadier');
+  document.getElementById('brig-name').textContent = w.name;
+  document.getElementById('brig-date').textContent = formatDate(new Date());
+
+  const newCount = tasks.filter(t => t.status === 'new').length;
+  const pendingCount = tasks.filter(t => t.status === 'done_pending').length;
+  const doneCount = tasks.filter(t => t.status === 'done').length;
+  document.getElementById('brig-stat-new').textContent = newCount;
+  document.getElementById('brig-stat-pending').textContent = pendingCount;
+  document.getElementById('brig-stat-done').textContent = doneCount;
+
+  // Мои задачи
+  const myTasks = tasks.filter(t => t.workerId === w.id || t.isShared);
+  const myEl = document.getElementById('brig-my-tasks');
+  myEl.innerHTML = myTasks.length === 0
+    ? '<div style="text-align:center;padding:16px;color:var(--muted);font-size:13px;font-weight:700;">Нет личных задач</div>'
+    : myTasks.map(t => buildBrigTaskCard(t, true)).join('');
+
+  // Все задачи бригады
+  const allEl = document.getElementById('brig-all-tasks');
+  const sorted = sortByDeadline(tasks.filter(t => t.status === 'new' && t.workerId && t.workerId !== w.id));
+  allEl.innerHTML = sorted.length === 0
+    ? '<div style="text-align:center;padding:16px;color:var(--muted);font-size:13px;font-weight:700;">Нет активных задач</div>'
+    : sorted.slice(0,10).map(t => buildBrigTaskCard(t, false)).join('');
+
+  // На проверке
+  const pendingEl = document.getElementById('brig-pending');
+  const pendingTasks = tasks.filter(t => t.status === 'done_pending');
+  pendingEl.innerHTML = pendingTasks.length === 0
+    ? '<div style="text-align:center;padding:16px;color:var(--muted);font-size:13px;font-weight:700;">Нет задач на проверке</div>'
+    : pendingTasks.map(t => buildBrigTaskCard(t, false)).join('');
+}
+
+function buildBrigTaskCard(t, isMyTask) {
+  const ww = getAllWorkers().find(x => x.id === t.workerId);
+  const urgency = getUrgency(t.deadline);
+  const colors = { new: '#E74C3C', done_pending: '#F39C12', done: '#1D9E75' };
+  const labels = { new: '🔴 Новое', done_pending: '⏳ Проверка', done: '✅ Готово' };
+  return `
+    <div style="background:var(--white);border-radius:16px;padding:13px 14px;margin-bottom:8px;box-shadow:var(--shadow);border-left:4px solid ${colors[t.status]||'#ccc'};">
+      <div style="display:flex;align-items:flex-start;gap:8px;">
+        <div style="font-size:20px;">${t.type==='portal'?'🚪':t.type==='section'?'📋':'📸'}</div>
+        <div style="flex:1;">
+          <div style="font-size:13px;font-weight:800;color:var(--ink);">${t.address}</div>
+          <div style="font-size:11px;color:var(--muted);">${t.problem||t.type_violation||'—'}</div>
+          ${t.deadline?`<div style="font-size:10px;font-weight:800;color:${urgency.color};margin-top:2px;">${urgency.icon} ${t.deadline}</div>`:''}
+          ${ww&&!isMyTask?`<div style="font-size:10px;font-weight:700;color:var(--green-d);margin-top:2px;">🧹 ${ww.short}</div>`:''}
+        </div>
+        <span style="font-size:10px;font-weight:800;padding:3px 8px;border-radius:10px;background:${colors[t.status]||'#ccc'}22;color:${colors[t.status]||'#ccc'};">
+          ${labels[t.status]||'—'}
+        </span>
+      </div>
+    </div>`;
+}
+
+function showAllPortalsBrig() {
+  showAllPortals();
+}
+
+// ─── BOSS: SET BRIGADIERS ───
+function buildBrigadierGrid() {
+  const grid = document.getElementById('brigadier-grid');
+  if (!grid) return;
+  grid.innerHTML = getAllWorkers().map(w => {
+    const isBrig = w.role === 'brigadier';
+    return `
+      <div onclick="toggleBrigadier(${w.id})" id="brig-card-${w.id}"
+        style="padding:10px;border-radius:12px;border:2px solid ${isBrig?'#7F3FBF':'var(--line)'};
+        background:${isBrig?'#F5EEFF':'var(--white)'};cursor:pointer;display:flex;align-items:center;gap:8px;">
+        <div style="font-size:20px;">${isBrig?'⭐':'🧹'}</div>
+        <div>
+          <div style="font-size:12px;font-weight:800;color:${isBrig?'#7F3FBF':'var(--ink)'};">${w.short}</div>
+          <div style="font-size:10px;color:var(--muted);">${isBrig?'Бригадир':'Дворник'}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function toggleBrigadier(id) {
+  const allW = getAllWorkers();
+  const w = allW.find(x => x.id === id);
+  if (!w) return;
+  w.role = w.role === 'brigadier' ? 'worker' : 'brigadier';
+
+  // Save — custom workers in localStorage, base WORKERS in memory
+  if (w.custom) {
+    saveCustomWorkers();
+  } else {
+    // Update base WORKERS array in memory
+    const bw = WORKERS.find(x => x.id === id);
+    if (bw) bw.role = w.role;
+    // Persist in localStorage
+    const saved = JSON.parse(localStorage.getItem('savelo_worker_roles') || '{}');
+    saved[id] = w.role;
+    localStorage.setItem('savelo_worker_roles', JSON.stringify(saved));
+  }
+
+  showToast(w.role === 'brigadier' ? `⭐ ${w.short} — теперь бригадир!` : `🧹 ${w.short} — снова дворник`);
+  buildBrigadierGrid();
+  buildWorkerGrid();
+  renderWorkersList();
+}
+
+function loadWorkerRoles() {
+  const saved = JSON.parse(localStorage.getItem('savelo_worker_roles') || '{}');
+  Object.entries(saved).forEach(([id, role]) => {
+    const w = WORKERS.find(x => x.id === parseInt(id));
+    if (w) w.role = role;
+  });
+}
+
 // ─── WORKERS MANAGEMENT ───
 let customWorkers = JSON.parse(localStorage.getItem('savelo_workers') || '[]');
 let nwRole = 'worker';
@@ -2674,6 +2862,7 @@ if ('serviceWorker' in navigator) {
 
 // ─── INIT ───
 loadTasks();
+loadWorkerRoles();
 buildWorkerGrid();
 </script>
 </body>
