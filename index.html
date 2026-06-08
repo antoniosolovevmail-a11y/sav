@@ -1323,50 +1323,42 @@ body {
 
 <!-- ═══ SCREEN: BOSS ═══ -->
 <div id="screen-boss" class="screen">
-  <div class="boss-header">
-    <div class="bh-title">Панель начальника</div>
-    <div class="bh-sub" id="boss-date">Сегодня</div>
-    <div class="bh-emoji">👔</div>
+
+  <!-- Header + Tab bar -->
+  <div style="background:linear-gradient(135deg,#1A1A2E,#2C3E50);padding:20px 20px 16px;position:sticky;top:0;z-index:100;">
+    <div style="display:flex;align-items:center;justify-content:space-between;">
+      <div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.5);font-weight:700;text-transform:uppercase;letter-spacing:1px;">Начальник · Савеловский</div>
+        <div style="font-size:20px;font-weight:900;color:white;" id="boss-date">Панель управления</div>
+      </div>
+      <div style="font-size:32px;">👔</div>
+    </div>
+    <div style="display:flex;gap:4px;margin-top:14px;background:rgba(255,255,255,0.1);border-radius:14px;padding:4px;">
+      <button id="boss-tab-btn-home" onclick="bossSwitchTab('home')" style="flex:1;background:white;color:var(--ink);border:none;border-radius:10px;padding:8px 4px;font-family:'Nunito',sans-serif;font-size:11px;font-weight:800;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;"><span>🏠</span>Главная</button>
+      <button id="boss-tab-btn-check" onclick="bossSwitchTab('check')" style="flex:1;background:transparent;color:rgba(255,255,255,0.7);border:none;border-radius:10px;padding:8px 4px;font-family:'Nunito',sans-serif;font-size:11px;font-weight:800;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;position:relative;"><span>✅</span>Проверка<span id="boss-check-badge" style="display:none;position:absolute;top:2px;right:4px;background:#E74C3C;color:white;font-size:9px;font-weight:900;min-width:16px;height:16px;border-radius:8px;text-align:center;line-height:16px;padding:0 3px;"></span></button>
+      <button id="boss-tab-btn-tasks" onclick="bossSwitchTab('tasks')" style="flex:1;background:transparent;color:rgba(255,255,255,0.7);border:none;border-radius:10px;padding:8px 4px;font-family:'Nunito',sans-serif;font-size:11px;font-weight:800;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;"><span>📋</span>Задачи</button>
+      <button id="boss-tab-btn-team" onclick="bossSwitchTab('team')" style="flex:1;background:transparent;color:rgba(255,255,255,0.7);border:none;border-radius:10px;padding:8px 4px;font-family:'Nunito',sans-serif;font-size:11px;font-weight:800;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;"><span>👥</span>Команда</button>
+    </div>
   </div>
 
-  <div class="boss-container">
-    <div class="stats-row">
-      <div class="stat-box">
+  <!-- TAB: ГЛАВНАЯ -->
+  <div id="boss-tab-home" style="padding:16px 16px 100px;">
+    <div class="stats-row" style="margin-bottom:16px;">
+      <div class="stat-box" onclick="bossSwitchTab('check')" style="cursor:pointer;">
+        <div class="stat-num yellow" id="boss-stat-pending">0</div>
+        <div class="stat-label">Проверка</div>
+      </div>
+      <div class="stat-box" onclick="bossSwitchTab('tasks')" style="cursor:pointer;">
         <div class="stat-num red" id="boss-stat-new">0</div>
         <div class="stat-label">Активных</div>
-      </div>
-      <div class="stat-box">
-        <div class="stat-num yellow" id="boss-stat-pending">0</div>
-        <div class="stat-label">На проверке</div>
       </div>
       <div class="stat-box">
         <div class="stat-num green" id="boss-stat-done">0</div>
         <div class="stat-label">Закрыто</div>
       </div>
     </div>
-
-    <div class="section-title">⏳ Ожидают одобрения</div>
-    <div id="boss-approvals"></div>
-
-    <div class="section-title">🚪 Все порталы</div>
-    <div id="boss-portals"></div>
-
-    <div class="section-title">📸 Ракурсы</div>
-    <div onclick="showRakursTracker()" style="background:var(--white);border-radius:var(--radius);padding:16px;margin-bottom:10px;box-shadow:var(--shadow);display:flex;align-items:center;gap:14px;cursor:pointer;border-left:5px solid #E07B2B;">
-      <div style="font-size:36px;">📸</div>
-      <div style="flex:1;">
-        <div style="font-size:15px;font-weight:800;color:var(--ink);">Трекер ракурсов</div>
-        <div style="font-size:12px;color:var(--muted);margin-top:2px;" id="rakurs-tracker-summary">Загрузка...</div>
-      </div>
-      <div style="color:var(--muted);font-size:20px;">›</div>
-    </div>
-    <div id="boss-rakurs"></div>
-
-    <!-- ADD TASK FORM -->
-    <div class="section-title">➕ Добавить заявку</div>
-    <div style="background:var(--white);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);margin-bottom:10px;">
-
-      <!-- Тип задачи -->
+    <div style="background:var(--white);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);">
+      <div style="font-size:16px;font-weight:900;color:var(--ink);margin-bottom:16px;">➕ Новая задача</div>
       <div style="margin-bottom:12px;">
         <div style="font-size:12px;font-weight:800;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;">Тип</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;">
@@ -1377,149 +1369,92 @@ body {
           <button class="ftab" id="add-type-boss-photos" onclick="setAddType('boss-photos',this)">📸 Фото нач.</button>
         </div>
       </div>
-
-      <!-- Кому назначить -->
       <div style="margin-bottom:12px;">
-        <div style="font-size:12px;font-weight:800;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;">Кому назначить</div>
+        <div style="font-size:12px;font-weight:800;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;">Кому</div>
         <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
           <button class="ftab active" id="assign-personal" onclick="setAssignType('personal',this)">👤 Одному</button>
           <button class="ftab" id="assign-multi" onclick="setAssignType('multi',this)">👥 Нескольким</button>
           <button class="ftab" id="assign-all" onclick="setAssignType('all',this)">🌐 Всем</button>
         </div>
-
-        <!-- ONE: выбор одного -->
-        <div id="worker-select-wrap">
-          <select id="add-worker" style="width:100%;border:2px solid var(--line);border-radius:12px;padding:12px;font-family:'Nunito',sans-serif;font-size:14px;outline:none;background:white;">
-            <option value="">— выбери дворника —</option>
-          </select>
-        </div>
-
-        <!-- MULTI: чекбоксы -->
+        <div id="worker-select-wrap"><select id="add-worker" style="width:100%;border:2px solid var(--line);border-radius:12px;padding:12px;font-family:'Nunito',sans-serif;font-size:14px;outline:none;background:white;"></select></div>
         <div id="worker-multi-wrap" style="display:none;">
-          <div style="font-size:11px;color:var(--muted);margin-bottom:8px;">Отметь нужных дворников:</div>
-          <div id="worker-checkboxes" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;max-height:220px;overflow-y:auto;"></div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:8px;">Отметь нужных:</div>
+          <div id="worker-checkboxes" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;max-height:200px;overflow-y:auto;"></div>
           <div id="multi-selected-count" style="font-size:12px;font-weight:800;color:var(--green);margin-top:6px;"></div>
         </div>
-
-        <!-- ALL: пояснение -->
-        <div id="all-workers-info" style="display:none;background:var(--green-l);border-radius:12px;padding:12px;font-size:13px;color:var(--green-d);font-weight:700;">
-          🌐 Задача будет видна всем дворникам в разделе «Все порталы».
-        </div>
+        <div id="all-workers-info" style="display:none;background:var(--green-l);border-radius:12px;padding:12px;font-size:13px;color:var(--green-d);font-weight:700;">🌐 Задача будет видна всем.</div>
       </div>
-
-      <!-- Адрес -->
-      <div style="margin-bottom:12px;">
-        <div style="font-size:12px;font-weight:800;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;">Адрес</div>
-        <input id="add-address" placeholder="ул. Юннатов, д. 8А" style="width:100%;border:2px solid var(--line);border-radius:12px;padding:12px;font-family:'Nunito',sans-serif;font-size:14px;outline:none;">
-      </div>
-
-      <!-- Проблема -->
-      <div style="margin-bottom:12px;">
-        <div style="font-size:12px;font-weight:800;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;">Проблема / Нарушение</div>
-        <input id="add-problem" placeholder="Описание проблемы" style="width:100%;border:2px solid var(--line);border-radius:12px;padding:12px;font-family:'Nunito',sans-serif;font-size:14px;outline:none;">
-      </div>
-
-      <!-- Номер заявки -->
-      <div style="margin-bottom:12px;">
-        <div style="font-size:12px;font-weight:800;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;">Номер заявки</div>
-        <input id="add-number" placeholder="152995797" style="width:100%;border:2px solid var(--line);border-radius:12px;padding:12px;font-family:'Nunito',sans-serif;font-size:14px;outline:none;">
-      </div>
-
-      <!-- Срок -->
-      <div style="margin-bottom:12px;">
-        <div style="font-size:12px;font-weight:800;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;">Срок (дд.мм.гггг)</div>
-        <input id="add-deadline" placeholder="20.06.2026" style="width:100%;border:2px solid var(--line);border-radius:12px;padding:12px;font-family:'Nunito',sans-serif;font-size:14px;outline:none;">
-      </div>
-
-      <!-- Фото ракурса (для ракурсов) -->
+      <div style="margin-bottom:12px;"><div style="font-size:12px;font-weight:800;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;">Адрес</div><input id="add-address" placeholder="ул. Юннатов, д. 8А" style="width:100%;border:2px solid var(--line);border-radius:12px;padding:12px;font-family:'Nunito',sans-serif;font-size:14px;outline:none;"></div>
+      <div style="margin-bottom:12px;"><div style="font-size:12px;font-weight:800;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;">Проблема</div><input id="add-problem" placeholder="Описание" style="width:100%;border:2px solid var(--line);border-radius:12px;padding:12px;font-family:'Nunito',sans-serif;font-size:14px;outline:none;"></div>
+      <div style="margin-bottom:12px;"><div style="font-size:12px;font-weight:800;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;">Номер заявки</div><input id="add-number" placeholder="152995797" style="width:100%;border:2px solid var(--line);border-radius:12px;padding:12px;font-family:'Nunito',sans-serif;font-size:14px;outline:none;"></div>
+      <div style="margin-bottom:12px;"><div style="font-size:12px;font-weight:800;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;">Срок</div><input id="add-deadline" placeholder="20.06.2026" style="width:100%;border:2px solid var(--line);border-radius:12px;padding:12px;font-family:'Nunito',sans-serif;font-size:14px;outline:none;"></div>
       <div id="add-rakurs-photo-section" style="margin-bottom:12px;display:none;">
-        <div style="font-size:12px;font-weight:800;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;">📸 Фото замечания (что нужно отработать)</div>
+        <div style="font-size:12px;font-weight:800;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;">📸 Фото замечания</div>
         <label style="display:flex;align-items:center;gap:10px;background:var(--yellow-l);border:2px dashed var(--yellow);border-radius:12px;padding:14px;cursor:pointer;">
           <span style="font-size:24px;">📸</span>
-          <div>
-            <div style="font-size:13px;font-weight:800;color:var(--yellow);" id="rakurs-photo-label">Нажми чтобы добавить фото замечания</div>
-            <div style="font-size:11px;color:var(--muted);">Можно выбрать несколько — дворник увидит все</div>
-          </div>
+          <div><div style="font-size:13px;font-weight:800;color:var(--yellow);" id="rakurs-photo-label">Добавить фото</div><div style="font-size:11px;color:var(--muted);">Можно несколько</div></div>
           <input type="file" accept="image/*" multiple id="add-rakurs-photo" style="display:none;" onchange="handleRakursPhotoUpload(event)">
         </label>
-        <!-- Preview grid -->
-        <div id="rakurs-photo-preview-grid" style="display:none;margin-top:8px;display:grid;grid-template-columns:repeat(3,1fr);gap:6px;"></div>
+        <div id="rakurs-photo-preview-grid" style="display:none;margin-top:8px;grid-template-columns:repeat(3,1fr);gap:6px;"></div>
       </div>
-
-      <!-- PDF (для порталов) -->
       <div id="add-pdf-section" style="margin-bottom:12px;">
-        <div style="font-size:12px;font-weight:800;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;">📄 PDF документа (необязательно)</div>
+        <div style="font-size:12px;font-weight:800;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;">📄 PDF</div>
         <label style="display:flex;align-items:center;gap:10px;background:var(--blue-l);border:2px dashed var(--blue);border-radius:12px;padding:14px;cursor:pointer;">
           <span style="font-size:24px;">📄</span>
-          <div>
-            <div style="font-size:13px;font-weight:800;color:var(--blue);" id="pdf-upload-label">Нажми чтобы загрузить PDF</div>
-            <div style="font-size:11px;color:var(--muted);">Дворник сможет открыть в приложении</div>
-          </div>
+          <div style="font-size:13px;font-weight:800;color:var(--blue);" id="pdf-upload-label">Загрузить PDF</div>
           <input type="file" accept=".pdf,application/pdf" id="add-pdf-file" style="display:none;" onchange="handlePdfUpload(event)">
         </label>
       </div>
-
-      <button class="action-btn btn-done" onclick="addTask()" style="margin-top:4px;">
-        ➕ Добавить задачу
-      </button>
+      <button class="action-btn btn-done" onclick="addTask()">➕ Добавить задачу</button>
     </div>
+    <button onclick="logout()" style="width:100%;margin-top:12px;background:var(--bg);color:var(--muted);border:none;border-radius:16px;padding:14px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;">👋 Выйти</button>
+  </div>
 
-    <button class="action-btn" style="margin-top:10px;background:var(--bg);color:var(--muted);" onclick="logout()">
-      👋 Выйти
-    </button>
+  <!-- TAB: ПРОВЕРКА -->
+  <div id="boss-tab-check" style="display:none;padding:16px 16px 100px;">
+    <div style="font-size:16px;font-weight:900;color:var(--ink);margin-bottom:14px;">✅ Ожидают одобрения</div>
+    <div id="boss-approvals"></div>
+  </div>
 
-    <!-- ─── БРИГАДИРЫ ─── -->
-    <div class="section-title" style="margin-top:24px;">⭐ Назначить бригадиров</div>
-    <div style="background:var(--white);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);margin-bottom:10px;">
-      <div style="font-size:12px;color:var(--muted);margin-bottom:10px;font-weight:600;">Выбери кто из дворников будет бригадиром — они видят все задачи бригады</div>
+  <!-- TAB: ЗАДАЧИ -->
+  <div id="boss-tab-tasks" style="display:none;padding:16px 16px 100px;">
+    <div onclick="showRakursTracker()" style="background:var(--white);border-radius:var(--radius);padding:16px;margin-bottom:14px;box-shadow:var(--shadow);display:flex;align-items:center;gap:14px;cursor:pointer;border-left:5px solid #E07B2B;">
+      <div style="font-size:32px;">📊</div>
+      <div style="flex:1;"><div style="font-size:15px;font-weight:800;color:var(--ink);">Трекер ракурсов</div><div style="font-size:12px;color:var(--muted);margin-top:2px;" id="rakurs-tracker-summary">Загрузка...</div></div>
+      <div style="color:var(--muted);font-size:20px;">›</div>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:12px;overflow-x:auto;padding-bottom:4px;">
+      <button class="ftab active" data-btf="all" onclick="setBossTaskFilter('all',this)">Все</button>
+      <button class="ftab" data-btf="portal" onclick="setBossTaskFilter('portal',this)">🚪 Порталы</button>
+      <button class="ftab" data-btf="rakurs" onclick="setBossTaskFilter('rakurs',this)">📸 Ракурсы</button>
+      <button class="ftab" data-btf="section" onclick="setBossTaskFilter('section',this)">📋 Разделы</button>
+    </div>
+    <div id="boss-tasks-list"></div>
+    <div id="boss-portals" style="display:none;"></div>
+    <div id="boss-rakurs" style="display:none;"></div>
+  </div>
+
+  <!-- TAB: КОМАНДА -->
+  <div id="boss-tab-team" style="display:none;padding:16px 16px 100px;">
+    <div style="font-size:16px;font-weight:900;color:var(--ink);margin-bottom:10px;">⭐ Бригадиры</div>
+    <div style="background:var(--white);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow);margin-bottom:20px;">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px;font-weight:600;">Нажми чтобы назначить или снять</div>
       <div id="brigadier-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"></div>
     </div>
-
-    <!-- ─── ДОБАВИТЬ ДВОРНИКА ─── -->
-    <div class="section-title" style="margin-top:24px;">👤 Добавить дворника</div>
-    <div style="background:var(--white);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);margin-bottom:10px;">
-
-      <div style="margin-bottom:12px;">
-        <div style="font-size:12px;font-weight:800;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;">Имя и фамилия</div>
-        <input id="nw-name" placeholder="Иванов Иван" style="width:100%;border:2px solid var(--line);border-radius:12px;padding:12px;font-family:'Nunito',sans-serif;font-size:14px;outline:none;">
-      </div>
-
-      <div style="margin-bottom:12px;">
-        <div style="font-size:12px;font-weight:800;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;">Короткое имя (для списка)</div>
-        <input id="nw-short" placeholder="Иван" style="width:100%;border:2px solid var(--line);border-radius:12px;padding:12px;font-family:'Nunito',sans-serif;font-size:14px;outline:none;">
-      </div>
-
-      <div style="margin-bottom:12px;">
-        <div style="font-size:12px;font-weight:800;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;">Телефон</div>
-        <input id="nw-phone" placeholder="8 900 000 0000" type="tel" style="width:100%;border:2px solid var(--line);border-radius:12px;padding:12px;font-family:'Nunito',sans-serif;font-size:14px;outline:none;">
-      </div>
-
-      <div style="margin-bottom:12px;">
-        <div style="font-size:12px;font-weight:800;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;">Роль</div>
-        <div style="display:flex;gap:8px;">
-          <button class="ftab active" id="nw-role-worker" onclick="setNwRole('worker',this)">🧹 Дворник</button>
-          <button class="ftab" id="nw-role-brigadier" onclick="setNwRole('brigadier',this)">⭐ Бригадир</button>
-        </div>
-      </div>
-
-      <div style="margin-bottom:12px;">
-        <div style="font-size:12px;font-weight:800;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;">Адреса (через запятую)</div>
-        <textarea id="nw-addresses" placeholder="ул. Юннатов 6к1, ул. Мишина 4, ПР 25А" rows="3" style="width:100%;border:2px solid var(--line);border-radius:12px;padding:12px;font-family:'Nunito',sans-serif;font-size:13px;outline:none;resize:none;"></textarea>
-        <div style="font-size:11px;color:var(--muted);margin-top:4px;">Или выбери из списка участка:</div>
-        <div id="nw-address-grid" style="margin-top:8px;max-height:200px;overflow-y:auto;display:grid;grid-template-columns:1fr 1fr;gap:6px;"></div>
-      </div>
-
-      <button class="action-btn btn-done" onclick="addNewWorker()">
-        ➕ Добавить дворника
-      </button>
+    <div style="font-size:16px;font-weight:900;color:var(--ink);margin-bottom:10px;">👤 Добавить дворника</div>
+    <div style="background:var(--white);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);margin-bottom:20px;">
+      <div style="margin-bottom:12px;"><div style="font-size:12px;font-weight:800;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;">Имя и фамилия</div><input id="nw-name" placeholder="Иванов Иван" style="width:100%;border:2px solid var(--line);border-radius:12px;padding:12px;font-family:'Nunito',sans-serif;font-size:14px;outline:none;"></div>
+      <div style="margin-bottom:12px;"><div style="font-size:12px;font-weight:800;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;">Короткое имя</div><input id="nw-short" placeholder="Иван" style="width:100%;border:2px solid var(--line);border-radius:12px;padding:12px;font-family:'Nunito',sans-serif;font-size:14px;outline:none;"></div>
+      <div style="margin-bottom:12px;"><div style="font-size:12px;font-weight:800;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;">Телефон</div><input id="nw-phone" placeholder="8 900 000 0000" type="tel" style="width:100%;border:2px solid var(--line);border-radius:12px;padding:12px;font-family:'Nunito',sans-serif;font-size:14px;outline:none;"></div>
+      <div style="margin-bottom:12px;"><div style="font-size:12px;font-weight:800;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;">Роль</div><div style="display:flex;gap:8px;"><button class="ftab active" id="nw-role-worker" onclick="setNwRole('worker',this)">🧹 Дворник</button><button class="ftab" id="nw-role-brigadier" onclick="setNwRole('brigadier',this)">⭐ Бригадир</button></div></div>
+      <div style="margin-bottom:12px;"><div style="font-size:12px;font-weight:800;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;">Адреса</div><textarea id="nw-addresses" placeholder="ул. Юннатов 6к1, ул. Мишина 4" rows="2" style="width:100%;border:2px solid var(--line);border-radius:12px;padding:12px;font-family:'Nunito',sans-serif;font-size:13px;outline:none;resize:none;"></textarea><div style="font-size:11px;color:var(--muted);margin-top:4px;">Или выбери из списка:</div><div id="nw-address-grid" style="margin-top:8px;max-height:180px;overflow-y:auto;display:grid;grid-template-columns:1fr 1fr;gap:5px;"></div></div>
+      <button class="action-btn btn-done" onclick="addNewWorker()">➕ Добавить</button>
     </div>
-
-    <!-- ─── СПИСОК ДВОРНИКОВ ─── -->
-    <div class="section-title">🧹 Список дворников</div>
+    <div style="font-size:16px;font-weight:900;color:var(--ink);margin-bottom:10px;">🧹 Все дворники</div>
     <div id="boss-workers-list"></div>
   </div>
-</div>
 
+</div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -2297,149 +2232,169 @@ function openTaskPhoto(taskId, index) {
 }
 
 // ─── BOSS HOME ───
+// ─── BOSS TAB SWITCHING ───
+let bossCurrentTab = 'home';
+let bossTaskFilter = 'all';
+
+function bossSwitchTab(tab) {
+  bossCurrentTab = tab;
+  ['home','check','tasks','team'].forEach(t => {
+    const content = document.getElementById(`boss-tab-${t}`);
+    const btn = document.getElementById(`boss-tab-btn-${t}`);
+    if (!content || !btn) return;
+    if (t === tab) {
+      content.style.display = 'block';
+      btn.style.background = 'white';
+      btn.style.color = 'var(--ink)';
+    } else {
+      content.style.display = 'none';
+      btn.style.background = 'transparent';
+      btn.style.color = 'rgba(255,255,255,0.7)';
+    }
+  });
+  if (tab === 'check') renderBossApprovals();
+  if (tab === 'tasks') renderBossTasksList();
+  if (tab === 'team') { buildBrigadierGrid(); renderWorkersList(); buildAddressGrid(); }
+}
+
+function setBossTaskFilter(f, btn) {
+  bossTaskFilter = f;
+  document.querySelectorAll('[data-btf]').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderBossTasksList();
+}
+
+function renderBossTasksList() {
+  const list = document.getElementById('boss-tasks-list');
+  if (!list) return;
+  let filtered = tasks;
+  if (bossTaskFilter !== 'all') filtered = tasks.filter(t => t.type === bossTaskFilter);
+  filtered = sortByDeadline(filtered);
+  const colors = { new:'#E74C3C', done_pending:'#F39C12', done:'#1D9E75' };
+  const labels = { new:'🔴 Активна', done_pending:'⏳ Проверка', done:'✅ Закрыта' };
+  const icons  = { portal:'🚪', rakurs:'📸', section:'📋' };
+  if (filtered.length === 0) {
+    list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);font-size:14px;font-weight:800;">Нет задач</div>';
+    return;
+  }
+  list.innerHTML = filtered.map(t => {
+    const w = getAllWorkers().find(x => x.id === t.workerId);
+    const urgency = getUrgency(t.deadline);
+    return `<div style="background:var(--white);border-radius:16px;padding:13px 14px;margin-bottom:8px;box-shadow:var(--shadow);border-left:4px solid ${colors[t.status]||'#ccc'};display:flex;align-items:flex-start;gap:10px;">
+      <div style="font-size:22px;flex-shrink:0;">${icons[t.type]||'📋'}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;font-weight:800;">${t.address}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:1px;">${t.problem||t.type_violation||'—'}</div>
+        ${t.deadline?`<div style="font-size:10px;font-weight:800;color:${urgency.color};margin-top:2px;">${urgency.icon} ${t.deadline}</div>`:''}
+        ${w?`<div style="font-size:10px;color:var(--green-d);font-weight:700;margin-top:1px;">🧹 ${w.short}</div>`:''}
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;">
+        <span style="font-size:10px;font-weight:800;padding:3px 8px;border-radius:10px;background:${colors[t.status]||'#ccc'}22;color:${colors[t.status]||'#ccc'};">${labels[t.status]||'—'}</span>
+        <button onclick="taskAction('delete','${t.id}')" style="background:var(--red-l);color:var(--red);border:none;border-radius:8px;padding:4px 8px;font-size:12px;cursor:pointer;">🗑️</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderBossApprovals() {
+  const approvalsEl = document.getElementById('boss-approvals');
+  const pending_tasks = sortByDeadline(tasks.filter(t => t.status === 'done_pending'));
+
+  // Badge
+  const badge = document.getElementById('boss-check-badge');
+  if (badge) {
+    if (pending_tasks.length > 0) {
+      badge.style.display = 'inline-block';
+      badge.textContent = pending_tasks.length;
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+
+  if (!approvalsEl) return;
+  approvalsEl.innerHTML = '';
+  if (pending_tasks.length === 0) {
+    approvalsEl.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--muted);"><div style="font-size:48px;margin-bottom:12px;">🎉</div><div style="font-size:16px;font-weight:800;">Всё проверено!</div></div>';
+    return;
+  }
+
+  pending_tasks.forEach(t => {
+    const w = getAllWorkers().find(x => x.id === t.workerId);
+    const card = document.createElement('div');
+    card.className = 'approval-card';
+    const urgency = getUrgency(t.deadline);
+    card.innerHTML = `
+      <div class="ac-header">
+        <div class="ac-emoji">${t.type==='portal'?'🚪':'📸'}</div>
+        <div style="flex:1;">
+          <div class="ac-name">${w?w.name:'—'}</div>
+          <div class="ac-addr">${t.address}</div>
+        </div>
+        ${t.deadline?`<div style="font-size:11px;font-weight:800;color:${urgency.color};background:${urgency.bg};padding:4px 8px;border-radius:8px;">${urgency.icon} ${t.deadline}</div>`:''}
+      </div>
+      <div class="ac-type">${t.type==='portal'?'🚪 Портал':'📸 Ракурс'}</div>
+      ${t.type==='rakurs'&&(t.responsePhotos?.length||t.responsePhotoData)?`
+      <div style="margin-bottom:10px;">
+        <div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">📸 ДО / ПОСЛЕ</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+          <div>
+            <div style="font-size:10px;font-weight:800;color:#E74C3C;text-align:center;margin-bottom:4px;">🔴 ДО</div>
+            ${(t.origPhotos?.[0]||t.origPhotoData)?`<div class="open-orig-btn" style="aspect-ratio:1;border-radius:10px;overflow:hidden;cursor:zoom-in;"><img src="${t.origPhotos?.[0]||t.origPhotoData}" style="width:100%;height:100%;object-fit:cover;"></div>`:'<div style="aspect-ratio:1;border-radius:10px;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--muted);">Нет фото</div>'}
+          </div>
+          <div>
+            <div style="font-size:10px;font-weight:800;color:#1D9E75;text-align:center;margin-bottom:4px;">✅ ПОСЛЕ</div>
+            <div class="open-resp-btn" style="aspect-ratio:1;border-radius:10px;overflow:hidden;cursor:zoom-in;position:relative;">
+              <img src="${t.responsePhotos?.[0]||t.responsePhotoData}" style="width:100%;height:100%;object-fit:cover;">
+              ${(t.responsePhotos?.length||0)>1?`<div style="position:absolute;bottom:2px;right:4px;background:rgba(29,158,117,0.9);color:white;font-size:9px;font-weight:800;padding:2px 5px;border-radius:6px;">+${t.responsePhotos.length-1}</div>`:''}
+            </div>
+          </div>
+        </div>
+        <button class="dl-photos-btn" style="width:100%;margin-bottom:6px;background:var(--blue);color:white;border:none;border-radius:12px;padding:10px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer;">⬇️ Скачать фото (${t.responsePhotos?t.responsePhotos.length:1} шт.)</button>
+      </div>`:`<div style="padding:8px 0;font-size:13px;color:var(--muted);">📋 № ${t.number||'—'} — ${t.problem||t.type_violation||'—'}</div>`}
+      <div class="ac-btns">
+        <button class="ac-btn ac-approve btn-approve">✅ Принято</button>
+        <button class="ac-btn ac-reject btn-reject">↩️ Доработать</button>
+      </div>
+      <button class="btn-delete-task" style="width:100%;margin-top:8px;background:var(--red-l);color:var(--red);border:none;border-radius:12px;padding:10px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer;">🗑️ Удалить задачу</button>
+    `;
+
+    const tid = t.id;
+    card.querySelector('.btn-approve')?.addEventListener('click', () => approveTask(tid));
+    card.querySelector('.btn-reject')?.addEventListener('click', () => rejectTask(tid));
+    card.querySelector('.btn-delete-task')?.addEventListener('click', () => deleteTask(tid));
+    card.querySelector('.dl-photos-btn')?.addEventListener('click', () => downloadAllPhotos(getTaskPhotos(tid), (w?w.short:'')+'_фото'));
+    card.querySelector('.open-orig-btn')?.addEventListener('click', () => openFullscreen(getOrigPhotos(tid), 0));
+    card.querySelector('.open-resp-btn')?.addEventListener('click', () => openTaskPhoto(tid, 0));
+
+    approvalsEl.appendChild(card);
+  });
+}
+
 function showBossHome() {
   showScreen('screen-boss');
   document.getElementById('boss-date').textContent = formatDate(new Date());
   populateWorkerSelect();
-  buildAddressGrid();
-  renderWorkersList();
-  buildBrigadierGrid();
-  // Update rakurs tracker summary
   setTimeout(() => renderTracker(), 50);
 
+  // Stats
   const active = tasks.filter(t => t.status === 'new').length;
   const pending = tasks.filter(t => t.status === 'done_pending').length;
   const done = tasks.filter(t => t.status === 'done').length;
-
   document.getElementById('boss-stat-new').textContent = active;
   document.getElementById('boss-stat-pending').textContent = pending;
   document.getElementById('boss-stat-done').textContent = done;
 
-  // Approvals — sorted by deadline
-  const approvalsEl = document.getElementById('boss-approvals');
-  const pending_tasks = sortByDeadline(tasks.filter(t => t.status === 'done_pending'));
-  approvalsEl.innerHTML = '';
-  if (pending_tasks.length === 0) {
-    approvalsEl.innerHTML = '<div style="text-align:center;padding:16px;color:var(--muted);font-size:14px;font-weight:700;">Нет заявок на проверке</div>';
-  } else {
-    pending_tasks.forEach(t => {
-      const w = getAllWorkers().find(x => x.id === t.workerId);
-      const card = document.createElement('div');
-      card.className = 'approval-card';
-      const urgency = getUrgency(t.deadline);
-      card.innerHTML = `
-        <div class="ac-header">
-          <div class="ac-emoji">${t.type === 'portal' ? '🚪' : '📸'}</div>
-          <div style="flex:1;">
-            <div class="ac-name">${w ? w.name : '—'}</div>
-            <div class="ac-addr">${t.address}</div>
-          </div>
-          ${t.deadline ? `<div style="text-align:right;font-size:11px;font-weight:800;color:${urgency.color};background:${urgency.bg};padding:4px 8px;border-radius:8px;">${urgency.icon} ${t.deadline}</div>` : ''}
-        </div>
-        <div class="ac-type">${t.type === 'portal' ? '🚪 Портал' : '📸 Ракурс'}</div>
-        ${t.type === 'rakurs' && (t.responsePhotos?.length || t.responsePhotoData) ? `
-        <div style="margin-bottom:10px;">
-          <div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">📸 Сравнение ДО / ПОСЛЕ</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
-            <div>
-              <div style="font-size:10px;font-weight:800;color:#E74C3C;text-align:center;margin-bottom:4px;">🔴 ДО</div>
-              ${(t.origPhotos?.[0] || t.origPhotoData) ? `
-                <div class="open-orig-btn" style="aspect-ratio:1;border-radius:10px;overflow:hidden;cursor:zoom-in;position:relative;">
-                  <img src="${t.origPhotos?.[0] || t.origPhotoData}" style="width:100%;height:100%;object-fit:cover;">
-                  <div style="position:absolute;bottom:2px;right:4px;background:rgba(231,76,60,0.85);color:white;font-size:9px;font-weight:800;padding:2px 5px;border-radius:6px;">🔍</div>
-                </div>
-              ` : `<div style="aspect-ratio:1;border-radius:10px;background:var(--bg);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:11px;font-weight:700;">Нет фото</div>`}
-            </div>
-            <div>
-              <div style="font-size:10px;font-weight:800;color:#1D9E75;text-align:center;margin-bottom:4px;">✅ ПОСЛЕ</div>
-              <div class="open-resp-btn" style="aspect-ratio:1;border-radius:10px;overflow:hidden;cursor:zoom-in;position:relative;">
-                <img src="${t.responsePhotos?.[0]||t.responsePhotoData}" style="width:100%;height:100%;object-fit:cover;">
-                ${(t.responsePhotos?.length||0)>1?`<div style="position:absolute;bottom:2px;right:4px;background:rgba(29,158,117,0.85);color:white;font-size:9px;font-weight:800;padding:2px 5px;border-radius:6px;">+${t.responsePhotos.length-1}</div>`:''}
-                <div style="position:absolute;bottom:2px;left:4px;background:rgba(0,0,0,0.5);color:white;font-size:9px;font-weight:800;padding:2px 5px;border-radius:6px;">🔍</div>
-              </div>
-            </div>
-          </div>
-          <button class="dl-photos-btn" style="width:100%;margin-bottom:6px;background:var(--blue);color:white;border:none;border-radius:12px;padding:10px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer;">
-            ⬇️ Скачать все фото (${t.responsePhotos ? t.responsePhotos.length : 1} шт.)
-          </button>
-        </div>
-        ` : `<div style="padding:8px 0;font-size:13px;color:var(--muted);">📋 № ${t.number || '—'} — ${t.problem || t.type_violation || '—'}</div>`}
-        <div class="ac-btns">
-          <button class="ac-btn ac-approve btn-approve">✅ Принято</button>
-          <button class="ac-btn ac-reject btn-reject">↩️ Доработать</button>
-        </div>
-        <button class="btn-delete-task" style="width:100%;margin-top:8px;background:var(--red-l);color:var(--red);border:none;border-radius:12px;padding:10px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer;">🗑️ Удалить задачу</button>
-        ${t.type === 'portal' && t.hasPdf ? `<button class="btn-delete-pdf" style="width:100%;margin-top:6px;background:#EBF5FB;color:#2980B9;border:none;border-radius:12px;padding:10px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer;">🗑️ Удалить PDF</button>` : ''}
-      `;
-
-      // Attach events via addEventListener — no inline id issues
-      const tid = t.id;
-      card.querySelector('.btn-approve')?.addEventListener('click', () => approveTask(tid));
-      card.querySelector('.btn-reject')?.addEventListener('click', () => rejectTask(tid));
-      card.querySelector('.btn-delete-task')?.addEventListener('click', () => deleteTask(tid));
-      card.querySelector('.btn-delete-pdf')?.addEventListener('click', () => deletePortal(tid));
-      card.querySelector('.dl-photos-btn')?.addEventListener('click', () => downloadAllPhotos(getTaskPhotos(tid), (w?w.short:'') + '_фото'));
-      card.querySelector('.open-orig-btn')?.addEventListener('click', () => openFullscreen(getOrigPhotos(tid), 0));
-      card.querySelector('.open-resp-btn')?.addEventListener('click', () => openTaskPhoto(tid, 0));
-
-      approvalsEl.appendChild(card);
-    });
+  // Badge on check tab
+  const badge = document.getElementById('boss-check-badge');
+  if (badge) {
+    badge.style.display = pending > 0 ? 'inline-block' : 'none';
+    badge.textContent = pending;
   }
 
-  // All portals sorted
-  const portalsEl = document.getElementById('boss-portals');
-  portalsEl.innerHTML = '';
-  const sortedPortals = sortByDeadline(tasks.filter(t => t.type === 'portal'));
-  sortedPortals.forEach(t => {
-    const w = getAllWorkers().find(x => x.id === t.workerId);
-    const colors = { new: '#E74C3C', done_pending: '#F39C12', done: '#1D9E75' };
-    const labels = { new: '🔴 Активен', done_pending: '⏳ Проверка', done: '✅ Закрыт' };
-    const urgency = getUrgency(t.deadline);
-    const item = document.createElement('div');
-    item.className = 'portal-list-item';
-    item.style.setProperty('--cc', colors[t.status] || '#ccc');
-    item.innerHTML = `
-      <div class="pli-icon">🚪</div>
-      <div class="pli-body">
-        <div class="pli-title">${t.address}</div>
-        <div class="pli-sub">${w ? w.short : '—'} · № ${t.number || '—'}</div>
-        ${t.deadline ? `<div style="font-size:10px;font-weight:800;color:${urgency.color};margin-top:2px;">${urgency.icon} Срок: ${t.deadline}</div>` : ''}
-      </div>
-      <span class="pli-status" style="background:${colors[t.status]}22;color:${colors[t.status]}">${labels[t.status]}</span>
-      <button onclick="event.stopPropagation();taskAction('delete','${t.id}')" style="background:var(--red-l);color:var(--red);border:none;border-radius:8px;padding:6px 8px;font-size:13px;cursor:pointer;margin-left:4px;flex-shrink:0;">🗑️</button>
-    `;
-    portalsEl.appendChild(item);
-  });
-
-  // All rakurs sorted
-  const rakursEl = document.getElementById('boss-rakurs');
-  rakursEl.innerHTML = '';
-  const sortedRakurs = sortByDeadline(tasks.filter(t => t.type === 'rakurs'));
-  sortedRakurs.forEach(t => {
-    const w = getAllWorkers().find(x => x.id === t.workerId);
-    const colors = { new: '#E74C3C', done_pending: '#F39C12', done: '#1D9E75' };
-    const labels = { new: '🔴 Не отработан', done_pending: '⏳ Проверка', done: '✅ Закрыт' };
-    const urgency = getUrgency(t.deadline);
-    const item = document.createElement('div');
-    item.className = 'portal-list-item';
-    item.style.setProperty('--cc', colors[t.status] || '#ccc');
-    const hasPhoto = t.responsePhotoData;
-    item.innerHTML = `
-      <div class="pli-icon">📸</div>
-      <div class="pli-body">
-        <div class="pli-title">${t.address}</div>
-        <div class="pli-sub">${w ? w.short : '—'} · ${t.type_violation || '—'}</div>
-        ${t.deadline ? `<div style="font-size:10px;font-weight:800;color:${urgency.color};margin-top:2px;">${urgency.icon} Срок: ${t.deadline}</div>` : ''}
-      </div>
-      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
-        <span class="pli-status" style="background:${colors[t.status]}22;color:${colors[t.status]}">${labels[t.status]}</span>
-        ${hasPhoto ? `<button onclick="downloadAllPhotos(getTaskPhotos('${t.id}'),'${(w?w.short:'')}_ракурс')" style="background:var(--blue);color:white;border:none;border-radius:8px;padding:4px 8px;font-family:'Nunito',sans-serif;font-size:11px;font-weight:800;cursor:pointer;">⬇️ ${t.responsePhotos ? t.responsePhotos.length + ' фото' : 'Фото'}</button>` : ''}
-        <button onclick="event.stopPropagation();taskAction('delete','${t.id}')" style="background:var(--red-l);color:var(--red);border:none;border-radius:8px;padding:4px 8px;font-size:12px;cursor:pointer;">🗑️</button>
-      </div>
-    `;
-    rakursEl.appendChild(item);
-  });
+  // Restore current tab or default to home
+  bossSwitchTab(bossCurrentTab || 'home');
 }
+
 
 function approveTask(id) {
   const t = tasks.find(x => x.id === id);
