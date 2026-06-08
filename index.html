@@ -570,6 +570,96 @@ body {
 .nav-item.active .nav-label { color: var(--green); }
 
 /* Toast */
+/* ─── CHAT / COMMENTS ─── */
+.chat-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 0;
+}
+.chat-msg {
+  display: flex;
+  flex-direction: column;
+  max-width: 82%;
+}
+.chat-msg.from-boss { align-self: flex-end; align-items: flex-end; }
+.chat-msg.from-worker { align-self: flex-start; align-items: flex-start; }
+.chat-bubble {
+  padding: 10px 14px;
+  border-radius: 18px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.45;
+  position: relative;
+  word-break: break-word;
+}
+.chat-msg.from-boss .chat-bubble {
+  background: #1D9E75;
+  color: white;
+  border-bottom-right-radius: 4px;
+}
+.chat-msg.from-worker .chat-bubble {
+  background: white;
+  color: var(--ink);
+  border-bottom-left-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.chat-meta {
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 3px;
+  padding: 0 4px;
+  font-weight: 600;
+}
+.chat-msg.from-boss .chat-meta { text-align: right; }
+.chat-input-row {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+  padding: 10px 12px;
+  background: white;
+  border-top: 1px solid var(--line);
+  border-radius: 0 0 16px 16px;
+}
+.chat-input {
+  flex: 1;
+  border: 2px solid var(--line);
+  border-radius: 20px;
+  padding: 10px 14px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 14px;
+  outline: none;
+  resize: none;
+  min-height: 42px;
+  max-height: 100px;
+  line-height: 1.4;
+}
+.chat-input:focus { border-color: var(--green); }
+.chat-send-btn {
+  background: var(--green);
+  border: none;
+  border-radius: 50%;
+  width: 42px; height: 42px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  font-size: 18px;
+  flex-shrink: 0;
+  transition: transform 0.1s;
+}
+.chat-send-btn:active { transform: scale(0.92); }
+.chat-reject-btn {
+  background: var(--red);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 10px 16px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
 .toast {
   position: fixed;
   bottom: 90px; left: 50%; transform: translateX(-50%) translateY(20px);
@@ -920,6 +1010,34 @@ body {
     <div id="section-new-count" style="background:var(--red);color:white;font-size:11px;font-weight:800;padding:4px 10px;border-radius:20px;display:none;"></div>
   </div>
   <div style="padding:12px 16px 100px;" id="section-detail-content"></div>
+</div>
+
+<!-- ═══ SCREEN: TASK CHAT ═══ -->
+<div id="screen-task-chat" class="screen">
+  <div class="topbar" id="chat-topbar" style="background:#1D9E75;">
+    <div class="topbar-back" id="chat-back-btn">←</div>
+    <div style="flex:1;">
+      <div class="topbar-title" id="chat-title">Чат по задаче</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.7);" id="chat-addr"></div>
+    </div>
+  </div>
+
+  <!-- Messages area -->
+  <div id="chat-messages" style="
+    flex:1;padding:12px 14px;
+    background:#ECE5DD;
+    min-height:calc(100vh - 130px);
+    overflow-y:auto;
+    display:flex;flex-direction:column;gap:6px;
+  "></div>
+
+  <!-- Input -->
+  <div style="position:sticky;bottom:0;background:white;border-top:1px solid var(--line);padding:10px 12px;display:flex;gap:8px;align-items:flex-end;z-index:10;">
+    <textarea id="chat-input" class="chat-input" placeholder="Написать сообщение..." rows="1"
+      oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,100)+'px'"
+      onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChatMsg();}"></textarea>
+    <button class="chat-send-btn" onclick="sendChatMsg()">➤</button>
+  </div>
 </div>
 
 <!-- ═══ SCREEN: ALL PORTALS ═══ -->
@@ -2328,13 +2446,15 @@ function renderBossApprovals() {
         <button class="ac-btn ac-approve btn-approve">✅ Принято</button>
         <button class="ac-btn ac-reject btn-reject">↩️ Доработать</button>
       </div>
-      <button class="btn-delete-task" style="width:100%;margin-top:8px;background:var(--red-l);color:var(--red);border:none;border-radius:12px;padding:10px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer;">🗑️ Удалить задачу</button>
+      <button class="btn-chat" style="width:100%;margin-top:8px;background:#ECE5DD;color:#075E54;border:none;border-radius:12px;padding:10px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer;">💬 Открыть чат</button>
+      <button class="btn-delete-task" style="width:100%;margin-top:6px;background:var(--red-l);color:var(--red);border:none;border-radius:12px;padding:10px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer;">🗑️ Удалить задачу</button>
     `;
 
     const tid = t.id;
     card.querySelector('.btn-approve')?.addEventListener('click', () => approveTask(tid));
     card.querySelector('.btn-reject')?.addEventListener('click', () => rejectTask(tid));
     card.querySelector('.btn-delete-task')?.addEventListener('click', () => deleteTask(tid));
+    card.querySelector('.btn-chat')?.addEventListener('click', () => openTaskChat(tid, 'screen-boss'));
     card.querySelector('.dl-photos-btn')?.addEventListener('click', () => downloadAllPhotos(getTaskPhotos(tid), (w?w.short:'')+'_фото'));
     card.querySelector('.open-orig-btn')?.addEventListener('click', () => openFullscreen(getOrigPhotos(tid), 0));
     card.querySelector('.open-resp-btn')?.addEventListener('click', () => openTaskPhoto(tid, 0));
@@ -2984,6 +3104,41 @@ function swOpenTask(id) {
     `;
   }
 
+  // Chat / comments block
+  const comments = t.comments || [];
+  const unread = comments.filter(c => c.from === 'boss').length;
+  content += `
+    <div style="background:var(--white);border-radius:20px;overflow:hidden;margin-bottom:14px;box-shadow:var(--shadow);">
+      <div style="background:#075E54;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:18px;">💬</span>
+          <span style="font-size:14px;font-weight:800;color:white;">Чат с начальником</span>
+        </div>
+        ${unread > 0 ? `<span style="background:#E74C3C;color:white;font-size:11px;font-weight:800;padding:3px 8px;border-radius:20px;">${unread} сообщ.</span>` : ''}
+      </div>
+      ${comments.length > 0 ? `
+        <div style="background:#ECE5DD;padding:10px 12px;max-height:200px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;">
+          ${comments.slice(-3).map(c => {
+            const isBoss = c.from === 'boss';
+            return `<div style="display:flex;flex-direction:column;align-items:${isBoss?'flex-end':'flex-start'};">
+              <div style="background:${isBoss?'#1D9E75':'white'};color:${isBoss?'white':'var(--ink)'};padding:8px 12px;border-radius:14px;font-size:13px;font-weight:600;max-width:85%;${isBoss?'border-bottom-right-radius:4px':'border-bottom-left-radius:4px'};">
+                ${!isBoss?`<div style="font-size:10px;font-weight:800;color:var(--green);margin-bottom:3px;">${c.name||'Дворник'}</div>`:''}
+                ${c.text}
+                ${c.isReject?`<div style="font-size:10px;opacity:0.8;margin-top:2px;">↩️ Нужно переделать</div>`:''}
+              </div>
+            </div>`;
+          }).join('')}
+          ${comments.length > 3 ? `<div style="text-align:center;font-size:11px;color:#666;font-weight:700;">Показаны последние 3 из ${comments.length}</div>` : ''}
+        </div>
+      ` : ''}
+      <div style="padding:10px 12px;">
+        <button onclick="openTaskChat('${t.id}','screen-simple-task')" style="width:100%;background:#075E54;color:white;border:none;border-radius:12px;padding:12px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;">
+          💬 ${comments.length > 0 ? 'Открыть чат' : 'Написать начальнику'}
+        </button>
+      </div>
+    </div>
+  `;
+
   // Action buttons — BIG
   if (t.type === 'portal' && t.status === 'new') {
     content += `
@@ -3284,6 +3439,157 @@ function renderBrigPortals() {
         </div>
       </div>`;
   }).join('');
+}
+
+// ─── TASK CHAT ───
+let chatTaskId = null;
+let chatFromScreen = null;
+
+function openTaskChat(taskId, fromScreen) {
+  chatTaskId = taskId;
+  chatFromScreen = fromScreen || 'screen-boss';
+  const t = tasks.find(x => x.id === taskId);
+  if (!t) return;
+
+  document.getElementById('chat-title').textContent =
+    t.type === 'portal' ? '🚪 Чат по порталу' : '📸 Чат по ракурсу';
+  document.getElementById('chat-addr').textContent = t.address;
+
+  // Back button
+  document.getElementById('chat-back-btn').onclick = () => {
+    showScreen(chatFromScreen);
+    if (chatFromScreen === 'screen-boss') showBossHome();
+    else if (chatFromScreen === 'screen-simple-task') { /* stay */ }
+  };
+
+  renderChatMessages(t);
+  showScreen('screen-task-chat');
+  // Scroll to bottom
+  setTimeout(() => {
+    const msgs = document.getElementById('chat-messages');
+    msgs.scrollTop = msgs.scrollHeight;
+  }, 50);
+}
+
+function renderChatMessages(t) {
+  const msgs = document.getElementById('chat-messages');
+  const comments = t.comments || [];
+
+  if (comments.length === 0) {
+    msgs.innerHTML = `
+      <div style="text-align:center;padding:40px 20px;color:#666;">
+        <div style="font-size:36px;margin-bottom:8px;">💬</div>
+        <div style="font-size:14px;font-weight:700;">Нет сообщений</div>
+        <div style="font-size:12px;margin-top:4px;opacity:0.7;">Напиши первый комментарий</div>
+      </div>`;
+    return;
+  }
+
+  msgs.innerHTML = comments.map(c => {
+    const isBoss = c.from === 'boss';
+    const time = new Date(c.ts).toLocaleTimeString('ru', {hour:'2-digit',minute:'2-digit'});
+    const date = new Date(c.ts).toLocaleDateString('ru', {day:'numeric',month:'short'});
+    return `
+      <div class="chat-msg ${isBoss ? 'from-boss' : 'from-worker'}">
+        <div class="chat-bubble">
+          ${!isBoss ? `<div style="font-size:11px;font-weight:800;color:var(--green);margin-bottom:4px;">${c.name||'Дворник'}</div>` : ''}
+          ${c.text}
+          ${c.isReject ? `<div style="font-size:11px;margin-top:4px;opacity:0.8;">↩️ Отправлено на доработку</div>` : ''}
+        </div>
+        <div class="chat-meta">${date} · ${time}${c.isRead===false&&isBoss?' · ✓':''}${isBoss?' · 👔':''}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function sendChatMsg() {
+  const input = document.getElementById('chat-input');
+  const text = input.value.trim();
+  if (!text || !chatTaskId) return;
+
+  const t = tasks.find(x => x.id === chatTaskId);
+  if (!t) return;
+
+  if (!t.comments) t.comments = [];
+  const isBoss = currentUser?.role === 'boss';
+  const w = currentUser?.worker;
+
+  t.comments.push({
+    id: Date.now(),
+    from: isBoss ? 'boss' : 'worker',
+    name: isBoss ? 'Начальник' : (w?.short || 'Дворник'),
+    text,
+    ts: Date.now(),
+    isRead: false,
+  });
+
+  saveTasks();
+  input.value = '';
+  input.style.height = 'auto';
+  renderChatMessages(t);
+
+  const msgs = document.getElementById('chat-messages');
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function rejectTask(id) {
+  // Show reject dialog with comment
+  const t = tasks.find(x => x.id === id);
+  if (!t) return;
+
+  // Create modal
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:flex-end;justify-content:center;padding:0;';
+  modal.innerHTML = `
+    <div style="background:white;border-radius:24px 24px 0 0;padding:24px;width:100%;max-width:430px;box-shadow:0 -8px 40px rgba(0,0,0,0.2);">
+      <div style="font-size:18px;font-weight:900;color:var(--ink);margin-bottom:6px;">↩️ Отправить на доработку</div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:14px;">📍 ${t.address}</div>
+      <textarea id="reject-comment" placeholder="Что нужно исправить? Например: переснять с другого угла, убрать мусор до конца..." rows="4"
+        style="width:100%;border:2px solid var(--line);border-radius:16px;padding:14px;font-family:'Nunito',sans-serif;font-size:14px;outline:none;resize:none;margin-bottom:14px;box-sizing:border-box;"></textarea>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <button onclick="this.closest('div[style]').parentElement.remove()"
+          style="background:var(--bg);color:var(--muted);border:none;border-radius:14px;padding:14px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;">
+          Отмена
+        </button>
+        <button id="reject-confirm-btn"
+          style="background:var(--red);color:white;border:none;border-radius:14px;padding:14px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;">
+          ↩️ Отправить
+        </button>
+      </div>
+    </div>
+  `;
+
+  modal.querySelector('#reject-confirm-btn').addEventListener('click', () => {
+    const comment = modal.querySelector('#reject-comment').value.trim();
+    t.status = 'new';
+    t.responsePhotoData = null;
+    t.responsePhotos = null;
+    saveTasks();
+
+    // Add comment to chat
+    if (!t.comments) t.comments = [];
+    t.comments.push({
+      id: Date.now(),
+      from: 'boss',
+      name: 'Начальник',
+      text: comment || 'Нужно переделать.',
+      ts: Date.now(),
+      isReject: true,
+    });
+    saveTasks();
+
+    modal.remove();
+    showToast('↩️ Отправлено на доработку');
+    sendNotification('↩️ Нужно переделать', `${t.address}${comment ? ': ' + comment : ''}`, id);
+
+    const current = document.querySelector('.screen.active')?.id;
+    if (current === 'screen-rakurs-tracker') renderTracker();
+    else if (current === 'screen-boss') { bossSwitchTab('check'); renderBossApprovals(); }
+    else showBossHome();
+  });
+
+  document.body.appendChild(modal);
+  setTimeout(() => modal.querySelector('#reject-comment').focus(), 100);
 }
 
 // ─── RAKURS TRACKER ───
