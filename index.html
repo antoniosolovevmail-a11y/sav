@@ -928,6 +928,16 @@ body {
     <div id="portal-tasks"></div>
 
     <div class="section-title">📸 Ракурсы</div>
+    <div id="rakurs-series-btn" style="display:none;margin-bottom:10px;">
+      <button onclick="startRakursSeries()" style="width:100%;background:linear-gradient(135deg,#E07B2B,#C0602B);color:white;border:none;border-radius:20px;padding:18px;font-family:'Nunito',sans-serif;font-size:17px;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 6px 20px rgba(224,123,43,0.4);">
+        <span style="font-size:26px;">📸</span>
+        <div style="text-align:left;">
+          <div>Отработать серию ракурсов</div>
+          <div style="font-size:12px;opacity:0.85;font-weight:600;" id="rakurs-series-count">Загрузка...</div>
+        </div>
+        <span style="margin-left:auto;font-size:20px;">▶</span>
+      </button>
+    </div>
     <div id="rakurs-tasks"></div>
   </div>
 
@@ -949,6 +959,60 @@ body {
       <div class="nav-label">Выйти</div>
     </div>
   </div>
+</div>
+
+<!-- ═══ SCREEN: RAKURS SERIES ═══ -->
+<div id="screen-rakurs-series" class="screen" style="background:#1A1A2E;">
+
+  <!-- Top bar -->
+  <div style="background:#1A1A2E;padding:16px 20px 12px;position:sticky;top:0;z-index:10;">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+      <button onclick="exitRakursSeries()" style="background:rgba(255,255,255,0.1);border:none;border-radius:10px;width:36px;height:36px;color:white;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;">←</button>
+      <div style="flex:1;">
+        <div style="font-size:13px;color:rgba(255,255,255,0.5);font-weight:700;">Серия ракурсов</div>
+        <div style="font-size:16px;font-weight:900;color:white;" id="rs-title">Загрузка...</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:22px;font-weight:900;color:white;" id="rs-counter">1/1</div>
+        <div style="font-size:10px;color:rgba(255,255,255,0.5);">ракурс</div>
+      </div>
+    </div>
+    <!-- Progress bar -->
+    <div style="background:rgba(255,255,255,0.15);border-radius:10px;height:6px;overflow:hidden;">
+      <div id="rs-progress" style="height:6px;background:linear-gradient(90deg,#1D9E75,#27C48F);border-radius:10px;transition:width 0.4s;width:0%;"></div>
+    </div>
+  </div>
+
+  <!-- Main area: ДО / ПОСЛЕ -->
+  <div style="padding:12px 16px;flex:1;" id="rs-content">
+
+    <!-- ДО block -->
+    <div style="margin-bottom:10px;">
+      <div style="font-size:11px;font-weight:800;color:#E74C3C;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px;">🔴 ДО — замечание</div>
+      <div id="rs-before-photo" style="border-radius:16px;overflow:hidden;aspect-ratio:4/3;background:#2C3E50;display:flex;align-items:center;justify-content:center;cursor:zoom-in;">
+        <div style="text-align:center;color:rgba(255,255,255,0.4);">
+          <div style="font-size:36px;">🖼️</div>
+          <div style="font-size:13px;margin-top:4px;">Фото не прикреплено</div>
+        </div>
+      </div>
+      <div id="rs-before-desc" style="font-size:13px;color:rgba(255,255,255,0.7);margin-top:6px;background:rgba(255,255,255,0.05);border-radius:10px;padding:10px;"></div>
+    </div>
+
+    <!-- ПОСЛЕ block -->
+    <div style="margin-bottom:10px;">
+      <div style="font-size:11px;font-weight:800;color:#1D9E75;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px;">✅ ПОСЛЕ — твоё фото</div>
+      <div id="rs-after-area">
+        <!-- Filled by JS: either upload area or preview -->
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Bottom action bar -->
+  <div style="position:sticky;bottom:0;background:#1A1A2E;border-top:1px solid rgba(255,255,255,0.1);padding:12px 16px 28px;">
+    <div id="rs-actions"></div>
+  </div>
+
 </div>
 
 <!-- ═══ SCREEN: SECTIONS ═══ -->
@@ -1741,6 +1805,18 @@ function showWorkerHome(w) {
   const rakursContainer = document.getElementById('rakurs-tasks');
   rakursContainer.innerHTML = '';
   const sortedRakurs = sortByDeadline(rakursy);
+  const seriesBtn = document.getElementById('rakurs-series-btn');
+  const seriesCount = document.getElementById('rakurs-series-count');
+  const newRakurs = sortedRakurs.filter(t => t.status === 'new');
+
+  if (newRakurs.length > 1) {
+    // Show series button
+    if (seriesBtn) seriesBtn.style.display = 'block';
+    if (seriesCount) seriesCount.textContent = `${newRakurs.length} ракурсов не отработано`;
+  } else {
+    if (seriesBtn) seriesBtn.style.display = 'none';
+  }
+
   if (sortedRakurs.length === 0) {
     rakursContainer.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:14px;font-weight:700;">🎉 Нет ракурсов!</div>';
   } else {
@@ -3492,6 +3568,234 @@ function renderBrigPortals() {
         </div>
       </div>`;
   }).join('');
+}
+
+// ─── RAKURS SERIES MODE ───
+let rsSeries = [];      // array of rakurs tasks
+let rsIndex = 0;        // current index
+let rsPhotos = {};      // {taskId: [base64...]}
+let rsFromScreen = '';
+
+function startRakursSeries() {
+  const w = currentUser?.worker;
+  if (!w) return;
+  // Get all new rakurs for this worker
+  rsSeries = sortByDeadline(
+    tasks.filter(t => t.type === 'rakurs' && t.status === 'new' &&
+      (t.workerId === w.id || t.isShared))
+  );
+  if (rsSeries.length === 0) { showToast('Нет ракурсов для отработки!'); return; }
+  rsIndex = 0;
+  rsPhotos = {};
+  rsFromScreen = document.querySelector('.screen.active')?.id || 'screen-simple-worker';
+  rsRender();
+  showScreen('screen-rakurs-series');
+}
+
+function rsRender() {
+  const t = rsSeries[rsIndex];
+  const total = rsSeries.length;
+  const done = Object.keys(rsPhotos).filter(id => rsPhotos[id]?.length > 0).length;
+
+  // Header
+  document.getElementById('rs-title').textContent = t.address;
+  document.getElementById('rs-counter').textContent = `${rsIndex+1}/${total}`;
+  const pct = Math.round(rsIndex / total * 100);
+  document.getElementById('rs-progress').style.width = pct + '%';
+
+  // ДО photo
+  const origPhotos = t.origPhotos || (t.origPhotoData ? [t.origPhotoData] : []);
+  const beforeEl = document.getElementById('rs-before-photo');
+  if (origPhotos.length > 0) {
+    beforeEl.innerHTML = `<img src="${origPhotos[0]}" style="width:100%;height:100%;object-fit:cover;" onclick="openFullscreen(rsGetOrigPhotos(),0)">`;
+    beforeEl.style.cursor = 'zoom-in';
+    if (origPhotos.length > 1) {
+      beforeEl.innerHTML += `<div style="position:absolute;bottom:6px;right:8px;background:rgba(231,76,60,0.9);color:white;font-size:10px;font-weight:800;padding:3px 8px;border-radius:10px;">+${origPhotos.length-1} фото</div>`;
+      beforeEl.style.position = 'relative';
+    }
+  } else {
+    beforeEl.innerHTML = `<div style="text-align:center;color:rgba(255,255,255,0.4);"><div style="font-size:36px;">🖼️</div><div style="font-size:13px;margin-top:4px;">Фото не прикреплено</div></div>`;
+    beforeEl.style.cursor = 'default';
+  }
+  window.rsGetOrigPhotos = () => origPhotos;
+
+  // Description
+  const descEl = document.getElementById('rs-before-desc');
+  descEl.textContent = t.type_violation || t.problem || '';
+  descEl.style.display = descEl.textContent ? 'block' : 'none';
+
+  // ПОСЛЕ area
+  const myPhotos = rsPhotos[t.id] || [];
+  const afterEl = document.getElementById('rs-after-area');
+  if (myPhotos.length === 0) {
+    afterEl.innerHTML = `
+      <div style="border-radius:16px;border:2px dashed rgba(29,158,117,0.5);aspect-ratio:4/3;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:rgba(29,158,117,0.07);">
+        <div style="font-size:36px;">📷</div>
+        <div style="font-size:14px;color:rgba(255,255,255,0.6);font-weight:700;">Сделай фото с того же ракурса</div>
+      </div>`;
+  } else {
+    afterEl.innerHTML = `
+      <div style="display:grid;grid-template-columns:repeat(${Math.min(myPhotos.length,3)},1fr);gap:6px;border-radius:16px;overflow:hidden;">
+        ${myPhotos.map((src,i) => `
+          <div onclick="openFullscreen(rsGetAfterPhotos('${t.id}'),${i})" style="aspect-ratio:1;cursor:zoom-in;position:relative;background:#2C3E50;">
+            <img src="${src}" style="width:100%;height:100%;object-fit:cover;">
+            <button onclick="event.stopPropagation();rsRemovePhoto('${t.id}',${i})" style="position:absolute;top:4px;right:4px;background:rgba(231,76,60,0.9);color:white;border:none;border-radius:50%;width:22px;height:22px;font-size:11px;cursor:pointer;">✕</button>
+          </div>
+        `).join('')}
+      </div>
+      <div style="font-size:12px;color:rgba(29,158,117,0.8);margin-top:6px;font-weight:700;text-align:center;">✅ ${myPhotos.length} фото добавлено</div>`;
+    window.rsGetAfterPhotos = (id) => rsPhotos[id] || [];
+  }
+
+  // Actions
+  const actEl = document.getElementById('rs-actions');
+  actEl.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+      <label style="background:#1D9E75;color:white;border-radius:16px;padding:14px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:900;font-size:14px;">
+        📷 Камера
+        <input type="file" accept="image/*" capture="environment" style="display:none;" onchange="rsAddPhoto(event,'${t.id}')">
+      </label>
+      <label style="background:#2980B9;color:white;border-radius:16px;padding:14px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:900;font-size:14px;">
+        🖼️ Галерея
+        <input type="file" accept="image/*" multiple style="display:none;" onchange="rsAddPhotos(event,'${t.id}')">
+      </label>
+    </div>
+    <div style="display:grid;grid-template-columns:${rsIndex < rsSeries.length-1 ? '1fr 1fr' : '1fr'};gap:8px;">
+      ${rsIndex < rsSeries.length-1 ? `
+        <button onclick="rsSkip()" style="background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.7);border:none;border-radius:16px;padding:14px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;">
+          Пропустить →
+        </button>
+      ` : ''}
+      <button onclick="rsNext()" style="background:${myPhotos.length>0?'#1D9E75':'rgba(29,158,117,0.3)'};color:white;border:none;border-radius:16px;padding:14px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:900;cursor:pointer;">
+        ${rsIndex < rsSeries.length-1 ? '✅ Готово → Следующий' : '📤 Отправить всё'}
+      </button>
+    </div>
+    ${done > 0 ? `<div style="text-align:center;margin-top:8px;font-size:12px;color:rgba(255,255,255,0.4);font-weight:600;">Готово ракурсов: ${done} из ${rsSeries.length}</div>` : ''}
+  `;
+}
+
+function rsAddPhoto(e, taskId) {
+  const file = e.target.files[0];
+  if (!file) return;
+  rsCompressAndAdd([file], taskId);
+  e.target.value = '';
+}
+
+function rsAddPhotos(e, taskId) {
+  const files = Array.from(e.target.files);
+  if (!files.length) return;
+  rsCompressAndAdd(files, taskId);
+  e.target.value = '';
+}
+
+function rsCompressAndAdd(files, taskId) {
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX = 1200;
+        let w = img.width, h = img.height;
+        if (w > MAX) { h = h*MAX/w; w = MAX; }
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        if (!rsPhotos[taskId]) rsPhotos[taskId] = [];
+        rsPhotos[taskId].push(canvas.toDataURL('image/jpeg', 0.7));
+        rsRender();
+        showToast(`📷 Фото добавлено!`);
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function rsRemovePhoto(taskId, i) {
+  rsPhotos[taskId].splice(i, 1);
+  rsRender();
+}
+
+function rsSkip() {
+  if (rsIndex < rsSeries.length - 1) {
+    rsIndex++;
+    rsRender();
+  }
+}
+
+function rsNext() {
+  const t = rsSeries[rsIndex];
+  const myPhotos = rsPhotos[t.id] || [];
+
+  if (myPhotos.length === 0 && rsIndex < rsSeries.length - 1) {
+    // Skip without photo
+    rsIndex++;
+    rsRender();
+    return;
+  }
+
+  if (rsIndex < rsSeries.length - 1) {
+    rsIndex++;
+    rsRender();
+  } else {
+    // Last one — send all
+    rsSendAll();
+  }
+}
+
+async function rsSendAll() {
+  const w = currentUser?.worker;
+  const toSend = rsSeries.filter(t => (rsPhotos[t.id]||[]).length > 0);
+
+  if (toSend.length === 0) {
+    showToast('Нет фото для отправки!');
+    return;
+  }
+
+  const totalPhotos = toSend.reduce((s, t) => s + rsPhotos[t.id].length, 0);
+  const overlay = showUploadOverlay(totalPhotos);
+  let sent = 0;
+
+  for (const t of toSend) {
+    const photos = rsPhotos[t.id];
+    try {
+      const yaUrls = await uploadPhotosToYaDisk(
+        photos, w ? w.short : 'дворник', t.address, t.id,
+        (done, ph) => { updateUploadProgress(overlay, sent + done, totalPhotos); }
+      );
+      t.status = 'done_pending';
+      t.responsePhotos = [...photos];
+      t.responsePhotoData = photos[0];
+      if (yaUrls) t.yaPhotoUrls = yaUrls;
+    } catch(e) {
+      t.status = 'done_pending';
+      t.responsePhotos = [...photos];
+      t.responsePhotoData = photos[0];
+    }
+    sent += photos.length;
+    updateUploadProgress(overlay, sent, totalPhotos);
+  }
+  saveTasks();
+
+  overlay.innerHTML = `
+    <div style="font-size:86px;margin-bottom:12px;animation:popIn 0.4s ease-out;">✅</div>
+    <div style="font-size:24px;font-weight:900;color:var(--green);margin-bottom:6px;">Всё отправлено!</div>
+    <div style="font-size:15px;color:var(--muted);">${toSend.length} ракурсов · ${totalPhotos} фото</div>
+    <div style="margin-top:16px;font-size:12px;color:var(--muted);">Возврат через 2 сек...</div>
+  `;
+
+  setTimeout(() => {
+    overlay.remove();
+    if (currentUser?.worker?.role === 'brigadier') showBrigadierHome(currentUser.worker);
+    else showSimpleWorkerHome(currentUser.worker);
+  }, 2500);
+}
+
+function exitRakursSeries() {
+  if (Object.keys(rsPhotos).some(id => rsPhotos[id]?.length > 0)) {
+    if (!confirm('Фото не отправлены. Выйти из режима серии?')) return;
+  }
+  showSimpleWorkerHome(currentUser.worker);
 }
 
 // ─── TASK CHAT ───
