@@ -1934,58 +1934,31 @@ async function sendRakurs() {
   }
   const t = tasks.find(x => x.id === currentTaskId);
   const w = getAllWorkers().find(x => x.id === t.workerId);
-  const sendBtn = document.getElementById('rakurs-send-btn');
-  if (sendBtn) {
-    sendBtn.disabled = true;
-    sendBtn.textContent = '⏳ Отправляю...';
-    sendBtn.style.opacity = '0.7';
-  }
 
-  // Show loading overlay
-  const overlay = document.createElement('div');
-  overlay.id = 'send-overlay';
-  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(255,255,255,0.95);z-index:8888;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;';
-  overlay.innerHTML = `
-    <div style="font-size:72px;margin-bottom:20px;">⏳</div>
-    <div style="font-size:22px;font-weight:900;color:var(--ink);">Отправляю фото...</div>
-    <div style="font-size:15px;color:var(--muted);margin-top:8px;">${uploadedPhotos.length} фото</div>
-  `;
-  document.body.appendChild(overlay);
+  const overlay = showUploadOverlay(uploadedPhotos.length);
 
+  let yaUrls = null;
   try {
-    const yaUrls = await uploadPhotosToYaDisk(uploadedPhotos, w ? w.short : 'дворник', t.address, t.id);
-    t.status = 'done_pending';
-    t.responsePhotos = [...uploadedPhotos];
-    t.responsePhotoData = uploadedPhotos[0];
-    t.yaPhotoUrls = yaUrls;
-  } catch(e) {
-    t.status = 'done_pending';
-    t.responsePhotos = [...uploadedPhotos];
-    t.responsePhotoData = uploadedPhotos[0];
-  }
+    yaUrls = await uploadPhotosToYaDisk(
+      uploadedPhotos, w ? w.short : 'дворник', t.address, t.id,
+      (done, total) => updateUploadProgress(overlay, done, total)
+    );
+  } catch(e) {}
+
+  t.status = 'done_pending';
+  t.responsePhotos = [...uploadedPhotos];
+  t.responsePhotoData = uploadedPhotos[0];
+  if (yaUrls) t.yaPhotoUrls = yaUrls;
   saveTasks();
 
-  // Success screen
-  overlay.innerHTML = `
-    <div style="font-size:100px;margin-bottom:16px;animation:popIn 0.4s ease-out;">✅</div>
-    <div style="font-size:28px;font-weight:900;color:var(--green);margin-bottom:8px;">Отправлено!</div>
-    <div style="font-size:15px;color:var(--muted);margin-bottom:4px;">${uploadedPhotos.length} фото → начальнику</div>
-    <div style="margin-top:24px;background:var(--green-l);border-radius:20px;padding:14px 20px;">
-      <div style="font-size:13px;color:var(--green-d);font-weight:700;">📍 ${t.address}</div>
-    </div>
-    <div style="margin-top:20px;font-size:13px;color:var(--muted);">Возврат через 2 сек...</div>
-  `;
-
+  showUploadSuccess(overlay, uploadedPhotos.length, t.address);
+  const photosCopy = [...uploadedPhotos];
+  uploadedPhotos = [];
   setTimeout(() => {
     overlay.remove();
-    uploadedPhotos = [];
-    // Return to correct home screen
-    if (currentUser?.worker?.role === 'brigadier') {
-      showBrigadierHome(currentUser.worker);
-    } else if (currentUser?.worker) {
-      showSimpleWorkerHome(currentUser.worker);
-    }
-  }, 2000);
+    if (currentUser?.worker?.role === 'brigadier') showBrigadierHome(currentUser.worker);
+    else if (currentUser?.worker) showSimpleWorkerHome(currentUser.worker);
+  }, 2500);
 }
 
 // ─── ADD TASK ───
@@ -2785,19 +2758,48 @@ function dataURLtoBlob(dataurl) {
   return new Blob([u8arr], { type: mime });
 }
 
-async function uploadPhotosToYaDisk(photos, workerName, address, taskId) {
+async function uploadPhotosToYaDisk(photos, workerName, address, taskId, onProgress) {
+  // Check if Yandex Disk is available first
+  const YA_AVAILABLE = await checkYaDisk();
+  if (!YA_AVAILABLE) {
+    // No disk — just return null urls, save locally
+    photos.forEach((_, i) => onProgress && onProgress(i+1, photos.length));
+    return null;
+  }
+
   await yaEnsureFolder(YA_FOLDER);
   const subfolder = `${YA_FOLDER}/${taskId}_${address.replace(/[^а-яА-Яa-zA-Z0-9]/g,'_').slice(0,30)}`;
   await yaEnsureFolder(subfolder);
   const urls = [];
   for (let i = 0; i < photos.length; i++) {
-    showToast(`📤 Загружаю фото ${i+1}/${photos.length}...`);
-    const blob = dataURLtoBlob(photos[i]);
-    const filename = `${workerName}_фото${i+1}_${Date.now()}.jpg`;
-    const url = await yaUploadFile(`${subfolder}/${filename}`, blob, 'image/jpeg');
-    urls.push(url || photos[i]);
+    onProgress && onProgress(i+1, photos.length);
+    try {
+      const blob = dataURLtoBlob(photos[i]);
+      const filename = `${workerName}_фото${i+1}.jpg`;
+      const url = await Promise.race([
+        yaUploadFile(`${subfolder}/${filename}`, blob, 'image/jpeg'),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 15000))
+      ]);
+      urls.push(url || photos[i]);
+    } catch(e) {
+      urls.push(null);
+    }
   }
   return urls;
+}
+
+async function checkYaDisk() {
+  try {
+    const res = await Promise.race([
+      fetch('https://cloud-api.yandex.net/v1/disk/', {
+        headers: { 'Authorization': `OAuth ${YA_TOKEN}` }
+      }),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
+    ]);
+    return res.ok;
+  } catch(e) {
+    return false;
+  }
 }
 
 async function uploadPdfToYaDisk(pdfData, pdfName, taskId) {
@@ -3090,61 +3092,85 @@ function swRenderPhotoGrid() {
     </label>` : '');
 }
 
+// ─── UPLOAD OVERLAY HELPERS ───
+function showUploadOverlay(total) {
+  // Remove old if exists
+  document.getElementById('send-overlay')?.remove();
+  const overlay = document.createElement('div');
+  overlay.id = 'send-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(255,255,255,0.97);z-index:9998;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;';
+  overlay.innerHTML = `
+    <div style="font-size:52px;margin-bottom:16px;">📤</div>
+    <div style="font-size:20px;font-weight:900;color:var(--ink);margin-bottom:6px;">Отправляю фото...</div>
+    <div id="upload-progress-text" style="font-size:14px;color:var(--muted);margin-bottom:14px;">0 из ${total}</div>
+    <div style="width:260px;background:var(--line);border-radius:20px;height:14px;overflow:hidden;">
+      <div id="upload-progress-bar" style="height:14px;background:linear-gradient(90deg,var(--green),#27C48F);border-radius:20px;width:0%;transition:width 0.3s;"></div>
+    </div>
+    <div id="upload-pct" style="font-size:32px;font-weight:900;color:var(--green);margin-top:10px;">0%</div>
+    <div style="font-size:12px;color:var(--muted);margin-top:8px;opacity:0.7;">Не закрывай приложение</div>
+  `;
+  if (!document.getElementById('sw-anim-style')) {
+    const style = document.createElement('style');
+    style.id = 'sw-anim-style';
+    style.textContent = '@keyframes popIn{0%{transform:scale(0.3);opacity:0}70%{transform:scale(1.15)}100%{transform:scale(1);opacity:1}}';
+    document.head.appendChild(style);
+  }
+  document.body.appendChild(overlay);
+  return overlay;
+}
+
+function updateUploadProgress(overlay, done, total) {
+  const pct = Math.round(done / total * 100);
+  const bar = overlay.querySelector('#upload-progress-bar');
+  const text = overlay.querySelector('#upload-progress-text');
+  const pctEl = overlay.querySelector('#upload-pct');
+  if (bar) bar.style.width = pct + '%';
+  if (text) text.textContent = `${done} из ${total}`;
+  if (pctEl) pctEl.textContent = pct + '%';
+}
+
+function showUploadSuccess(overlay, count, address) {
+  overlay.innerHTML = `
+    <div style="font-size:86px;margin-bottom:12px;animation:popIn 0.4s ease-out;">✅</div>
+    <div style="font-size:24px;font-weight:900;color:var(--green);margin-bottom:6px;">Отправлено!</div>
+    <div style="font-size:14px;color:var(--muted);">${count} фото → начальнику</div>
+    <div style="margin-top:18px;background:var(--green-l);border-radius:16px;padding:12px 20px;">
+      <div style="font-size:13px;color:var(--green-d);font-weight:700;">📍 ${address}</div>
+    </div>
+    <div style="margin-top:14px;font-size:12px;color:var(--muted);">Возврат через 2 сек...</div>
+  `;
+}
+
 async function swSendRakurs() {
   if (swPhotos.length === 0) { showToast('Сначала добавь фото! 📷'); return; }
   const t = tasks.find(x => x.id === currentTaskId);
   const w = currentUser?.worker;
+  const photosCopy = [...swPhotos];
 
-  // Show loading state
-  const content = document.getElementById('st-content');
-  content.innerHTML = `
-    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;text-align:center;padding:20px;">
-      <div style="font-size:72px;margin-bottom:20px;animation:spin 1s linear infinite;">⏳</div>
-      <div style="font-size:22px;font-weight:900;color:var(--ink);">Отправляю фото...</div>
-      <div style="font-size:15px;color:var(--muted);margin-top:8px;">${swPhotos.length} фото → начальнику</div>
-    </div>
-  `;
+  const overlay = showUploadOverlay(photosCopy.length);
 
+  let yaUrls = null;
   try {
-    const yaUrls = await uploadPhotosToYaDisk(swPhotos, w?w.short:'дворник', t.address, t.id);
-    t.status = 'done_pending';
-    t.responsePhotos = [...swPhotos];
-    t.responsePhotoData = swPhotos[0];
-    t.yaPhotoUrls = yaUrls;
-  } catch(e) {
-    t.status = 'done_pending';
-    t.responsePhotos = [...swPhotos];
-    t.responsePhotoData = swPhotos[0];
-  }
+    yaUrls = await uploadPhotosToYaDisk(
+      photosCopy, w ? w.short : 'дворник', t.address, t.id,
+      (done, total) => updateUploadProgress(overlay, done, total)
+    );
+  } catch(e) {}
+
+  t.status = 'done_pending';
+  t.responsePhotos = [...photosCopy];
+  t.responsePhotoData = photosCopy[0];
+  if (yaUrls) t.yaPhotoUrls = yaUrls;
   saveTasks();
 
-  // BIG SUCCESS SCREEN
-  content.innerHTML = `
-    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:70vh;text-align:center;padding:24px;">
-      <div style="font-size:100px;margin-bottom:16px;animation:popIn 0.4s ease-out;">✅</div>
-      <div style="font-size:28px;font-weight:900;color:var(--green);margin-bottom:8px;">Отправлено!</div>
-      <div style="font-size:16px;color:var(--muted);margin-bottom:4px;">${swPhotos.length} фото отправлено начальнику</div>
-      <div style="font-size:14px;color:var(--muted);">Ждите проверки 👆</div>
-      <div style="margin-top:32px;background:var(--green-l);border-radius:20px;padding:16px 24px;">
-        <div style="font-size:13px;color:var(--green-d);font-weight:700;">📍 ${t.address}</div>
-      </div>
-      <div style="margin-top:24px;font-size:13px;color:var(--muted);">Возврат на главную через 3 сек...</div>
-    </div>
-  `;
+  showUploadSuccess(overlay, photosCopy.length, t.address);
+  swPhotos = [];
 
-  // Add animation style
-  if (!document.getElementById('sw-anim-style')) {
-    const style = document.createElement('style');
-    style.id = 'sw-anim-style';
-    style.textContent = `
-      @keyframes popIn { 0%{transform:scale(0.3);opacity:0} 70%{transform:scale(1.15)} 100%{transform:scale(1);opacity:1} }
-      @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
-    `;
-    document.head.appendChild(style);
-  }
-
-  // Auto return after 3 seconds
-  setTimeout(() => showSimpleWorkerHome(currentUser.worker), 3000);
+  setTimeout(() => {
+    overlay.remove();
+    if (currentUser?.worker?.role === 'brigadier') showBrigadierHome(currentUser.worker);
+    else showSimpleWorkerHome(currentUser.worker);
+  }, 2500);
 }
 
 function swMarkPortalDone() {
