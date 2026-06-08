@@ -962,56 +962,50 @@ body {
 </div>
 
 <!-- ═══ SCREEN: RAKURS SERIES ═══ -->
-<div id="screen-rakurs-series" class="screen" style="background:#1A1A2E;">
+<div id="screen-rakurs-series" class="screen" style="background:#111;display:flex;flex-direction:column;">
 
-  <!-- Top bar -->
-  <div style="background:#1A1A2E;padding:16px 20px 12px;position:sticky;top:0;z-index:10;">
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
-      <button onclick="exitRakursSeries()" style="background:rgba(255,255,255,0.1);border:none;border-radius:10px;width:36px;height:36px;color:white;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;">←</button>
-      <div style="flex:1;">
-        <div style="font-size:13px;color:rgba(255,255,255,0.5);font-weight:700;">Серия ракурсов</div>
-        <div style="font-size:16px;font-weight:900;color:white;" id="rs-title">Загрузка...</div>
+  <!-- Compact top bar -->
+  <div style="background:#111;padding:12px 16px 10px;flex-shrink:0;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+      <button onclick="exitRakursSeries()" style="background:rgba(255,255,255,0.1);border:none;border-radius:10px;width:36px;height:36px;color:white;font-size:18px;cursor:pointer;flex-shrink:0;">←</button>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:12px;color:rgba(255,255,255,0.45);font-weight:700;">Ракурс <span id="rs-counter">1/1</span></div>
+        <div style="font-size:14px;font-weight:900;color:white;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" id="rs-title">—</div>
       </div>
-      <div style="text-align:right;">
-        <div style="font-size:22px;font-weight:900;color:white;" id="rs-counter">1/1</div>
-        <div style="font-size:10px;color:rgba(255,255,255,0.5);">ракурс</div>
-      </div>
+      <div id="rs-done-badge" style="background:#1D9E75;color:white;font-size:11px;font-weight:800;padding:4px 10px;border-radius:20px;white-space:nowrap;"></div>
     </div>
-    <!-- Progress bar -->
-    <div style="background:rgba(255,255,255,0.15);border-radius:10px;height:6px;overflow:hidden;">
-      <div id="rs-progress" style="height:6px;background:linear-gradient(90deg,#1D9E75,#27C48F);border-radius:10px;transition:width 0.4s;width:0%;"></div>
+    <!-- Progress -->
+    <div style="background:rgba(255,255,255,0.12);border-radius:6px;height:5px;overflow:hidden;">
+      <div id="rs-progress" style="height:5px;background:linear-gradient(90deg,#1D9E75,#27C48F);border-radius:6px;transition:width 0.3s;width:0%;"></div>
     </div>
   </div>
 
-  <!-- Main area: ДО / ПОСЛЕ -->
-  <div style="padding:12px 16px;flex:1;" id="rs-content">
+  <!-- Split screen: ДО top, ПОСЛЕ bottom -->
+  <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
 
-    <!-- ДО block -->
-    <div style="margin-bottom:10px;">
-      <div style="font-size:11px;font-weight:800;color:#E74C3C;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px;">🔴 ДО — замечание</div>
-      <div id="rs-before-photo" style="border-radius:16px;overflow:hidden;aspect-ratio:4/3;background:#2C3E50;display:flex;align-items:center;justify-content:center;cursor:zoom-in;">
-        <div style="text-align:center;color:rgba(255,255,255,0.4);">
-          <div style="font-size:36px;">🖼️</div>
-          <div style="font-size:13px;margin-top:4px;">Фото не прикреплено</div>
+    <!-- ДО — верхняя половина -->
+    <div style="flex:1;position:relative;background:#1a1a1a;border-bottom:2px solid #333;min-height:0;">
+      <div style="position:absolute;top:8px;left:10px;z-index:5;background:rgba(231,76,60,0.9);color:white;font-size:10px;font-weight:800;padding:3px 10px;border-radius:20px;letter-spacing:1px;">🔴 ДО</div>
+      <div id="rs-before-photo" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;cursor:zoom-in;overflow:hidden;">
+        <div style="text-align:center;color:rgba(255,255,255,0.3);">
+          <div style="font-size:32px;">🖼️</div>
+          <div style="font-size:12px;margin-top:4px;">Нет фото замечания</div>
         </div>
       </div>
-      <div id="rs-before-desc" style="font-size:13px;color:rgba(255,255,255,0.7);margin-top:6px;background:rgba(255,255,255,0.05);border-radius:10px;padding:10px;"></div>
+      <!-- Description overlay -->
+      <div id="rs-before-desc" style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.7);color:white;font-size:12px;font-weight:600;padding:8px 12px;display:none;"></div>
     </div>
 
-    <!-- ПОСЛЕ block -->
-    <div style="margin-bottom:10px;">
-      <div style="font-size:11px;font-weight:800;color:#1D9E75;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px;">✅ ПОСЛЕ — твоё фото</div>
-      <div id="rs-after-area">
-        <!-- Filled by JS: either upload area or preview -->
-      </div>
+    <!-- ПОСЛЕ — нижняя половина -->
+    <div style="flex:1;position:relative;background:#0d1a0d;min-height:0;">
+      <div style="position:absolute;top:8px;left:10px;z-index:5;background:rgba(29,158,117,0.9);color:white;font-size:10px;font-weight:800;padding:3px 10px;border-radius:20px;letter-spacing:1px;">✅ ПОСЛЕ</div>
+      <div id="rs-after-area" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;overflow:hidden;"></div>
     </div>
 
   </div>
 
-  <!-- Bottom action bar -->
-  <div style="position:sticky;bottom:0;background:#1A1A2E;border-top:1px solid rgba(255,255,255,0.1);padding:12px 16px 28px;">
-    <div id="rs-actions"></div>
-  </div>
+  <!-- Bottom controls -->
+  <div style="background:#111;padding:10px 14px 28px;flex-shrink:0;" id="rs-actions"></div>
 
 </div>
 
@@ -3039,27 +3033,42 @@ function swRenderTasks(w) {
     myTasks = tasks.filter(t => t.type === 'portal');
   }
 
-  // Active tasks only (not done)
   const active = myTasks.filter(t => t.status !== 'done');
   const sorted = sortByDeadline(active);
 
   // Badge
   const newCount = active.filter(t => t.status === 'new').length;
-  if (newCount > 0) {
-    badge.style.display = 'flex';
-    badge.textContent = newCount;
-  } else {
-    badge.style.display = 'none';
+  badge.style.display = newCount > 0 ? 'flex' : 'none';
+  badge.textContent = newCount;
+
+  // Series button — show if 1+ new rakurs
+  const newRakurs = active.filter(t => t.type === 'rakurs' && t.status === 'new');
+  const seriesBtn = document.getElementById('rakurs-series-btn');
+  const seriesCount = document.getElementById('rakurs-series-count');
+  if (seriesBtn) {
+    seriesBtn.style.display = newRakurs.length > 0 ? 'block' : 'none';
+    if (seriesCount) seriesCount.textContent =
+      newRakurs.length === 1 ? '1 ракурс не отработан' : `${newRakurs.length} ракурсов не отработано`;
   }
 
-  if (sorted.length === 0) {
+  if (sorted.length === 0 && newRakurs.length === 0) {
     noTasks.style.display = 'block';
     container.innerHTML = '';
     return;
   }
   noTasks.style.display = 'none';
 
-  container.innerHTML = sorted.map(t => {
+  // Filter out rakurs if series button shown — they open via series
+  const tasksToShow = swCurrentTab === 'tasks' && newRakurs.length > 0
+    ? sorted.filter(t => !(t.type === 'rakurs' && t.status === 'new'))
+    : sorted;
+
+  if (tasksToShow.length === 0) {
+    container.innerHTML = '';
+    return;
+  }
+
+  container.innerHTML = tasksToShow.map(t => {
     const typeInfo = swGetTypeInfo(t);
     const urgency = getUrgency(t.deadline);
     const isPending = t.status === 'done_pending';
@@ -3069,9 +3078,8 @@ function swRenderTasks(w) {
         background:var(--white);border-radius:24px;padding:20px;margin-bottom:14px;
         box-shadow:0 4px 20px rgba(0,0,0,0.08);
         border-left:6px solid ${isPending ? '#F39C12' : typeInfo.color};
-        cursor:pointer;active:transform:scale(0.98);
+        cursor:pointer;
       ">
-        <!-- Type icon + status -->
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
           <div style="width:54px;height:54px;border-radius:16px;background:${typeInfo.color}22;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;">
             ${typeInfo.icon}
@@ -3082,34 +3090,22 @@ function swRenderTasks(w) {
           </div>
           <div style="font-size:24px;">${isPending ? '⏳' : '▶️'}</div>
         </div>
-
-        <!-- Problem description — BIG text -->
         <div style="background:${typeInfo.color}11;border-radius:12px;padding:12px;margin-bottom:10px;">
           <div style="font-size:14px;font-weight:700;color:var(--ink);line-height:1.5;">${t.problem || t.type_violation || '—'}</div>
         </div>
-
-        <!-- Deadline -->
         ${t.deadline ? `
           <div style="display:flex;align-items:center;gap:6px;">
             <span style="font-size:16px;">${urgency.icon}</span>
             <span style="font-size:13px;font-weight:800;color:${urgency.color};">Срок: ${t.deadline}</span>
-          </div>
-        ` : ''}
-
-        ${isPending ? `
-          <div style="background:#FEF9E7;border-radius:10px;padding:10px;margin-top:8px;font-size:13px;font-weight:700;color:#9A6D00;">
-            ⏳ Отправлено начальнику — ждём проверки
           </div>` : ''}
-
-        <!-- CTA -->
-        ${t.status === 'new' ? `
-          <div style="margin-top:12px;background:${typeInfo.color};color:white;border-radius:14px;padding:14px;text-align:center;font-size:16px;font-weight:900;">
-            ${typeInfo.action} →
-          </div>` : ''}
+        ${isPending ? `<div style="background:#FEF9E7;border-radius:10px;padding:8px 12px;margin-top:8px;font-size:13px;font-weight:700;color:#9A6D00;">⏳ На проверке у начальника</div>` : ''}
+        ${!isPending ? `<div style="margin-top:12px;background:${typeInfo.color};color:white;border-radius:14px;padding:12px;text-align:center;font-size:15px;font-weight:900;">${typeInfo.action} →</div>` : ''}
       </div>
     `;
   }).join('');
 }
+          </div>
+        ` : ''}
 
 function swGetTypeInfo(t) {
   if (t.type === 'portal') return { icon:'🚪', color:'#E74C3C', label:'Закрой заявку', action:'Открыть заявку' };
@@ -3600,77 +3596,89 @@ function rsRender() {
   // Header
   document.getElementById('rs-title').textContent = t.address;
   document.getElementById('rs-counter').textContent = `${rsIndex+1}/${total}`;
+  document.getElementById('rs-done-badge').textContent = `✅ ${done}/${total}`;
   const pct = Math.round(rsIndex / total * 100);
   document.getElementById('rs-progress').style.width = pct + '%';
 
-  // ДО photo
+  // ДО photo — fills top half
   const origPhotos = t.origPhotos || (t.origPhotoData ? [t.origPhotoData] : []);
   const beforeEl = document.getElementById('rs-before-photo');
   if (origPhotos.length > 0) {
-    beforeEl.innerHTML = `<img src="${origPhotos[0]}" style="width:100%;height:100%;object-fit:cover;" onclick="openFullscreen(rsGetOrigPhotos(),0)">`;
+    beforeEl.innerHTML = `
+      <img src="${origPhotos[0]}" style="width:100%;height:100%;object-fit:cover;"
+        onclick="openFullscreen(rsGetOrigPhotos(),0)">
+      ${origPhotos.length > 1 ? `<div style="position:absolute;bottom:8px;right:10px;z-index:5;background:rgba(0,0,0,0.7);color:white;font-size:10px;font-weight:800;padding:3px 8px;border-radius:10px;">+${origPhotos.length-1}</div>` : ''}
+    `;
+    beforeEl.style.position = 'relative';
     beforeEl.style.cursor = 'zoom-in';
-    if (origPhotos.length > 1) {
-      beforeEl.innerHTML += `<div style="position:absolute;bottom:6px;right:8px;background:rgba(231,76,60,0.9);color:white;font-size:10px;font-weight:800;padding:3px 8px;border-radius:10px;">+${origPhotos.length-1} фото</div>`;
-      beforeEl.style.position = 'relative';
-    }
   } else {
-    beforeEl.innerHTML = `<div style="text-align:center;color:rgba(255,255,255,0.4);"><div style="font-size:36px;">🖼️</div><div style="font-size:13px;margin-top:4px;">Фото не прикреплено</div></div>`;
-    beforeEl.style.cursor = 'default';
+    beforeEl.innerHTML = `<div style="text-align:center;color:rgba(255,255,255,0.3);"><div style="font-size:32px;">🖼️</div><div style="font-size:12px;margin-top:4px;">Нет фото замечания</div></div>`;
   }
   window.rsGetOrigPhotos = () => origPhotos;
 
-  // Description
+  // Description overlay
   const descEl = document.getElementById('rs-before-desc');
-  descEl.textContent = t.type_violation || t.problem || '';
-  descEl.style.display = descEl.textContent ? 'block' : 'none';
-
-  // ПОСЛЕ area
-  const myPhotos = rsPhotos[t.id] || [];
-  const afterEl = document.getElementById('rs-after-area');
-  if (myPhotos.length === 0) {
-    afterEl.innerHTML = `
-      <div style="border-radius:16px;border:2px dashed rgba(29,158,117,0.5);aspect-ratio:4/3;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:rgba(29,158,117,0.07);">
-        <div style="font-size:36px;">📷</div>
-        <div style="font-size:14px;color:rgba(255,255,255,0.6);font-weight:700;">Сделай фото с того же ракурса</div>
-      </div>`;
+  const desc = t.type_violation || t.problem || '';
+  if (desc) {
+    descEl.textContent = desc;
+    descEl.style.display = 'block';
   } else {
-    afterEl.innerHTML = `
-      <div style="display:grid;grid-template-columns:repeat(${Math.min(myPhotos.length,3)},1fr);gap:6px;border-radius:16px;overflow:hidden;">
-        ${myPhotos.map((src,i) => `
-          <div onclick="openFullscreen(rsGetAfterPhotos('${t.id}'),${i})" style="aspect-ratio:1;cursor:zoom-in;position:relative;background:#2C3E50;">
-            <img src="${src}" style="width:100%;height:100%;object-fit:cover;">
-            <button onclick="event.stopPropagation();rsRemovePhoto('${t.id}',${i})" style="position:absolute;top:4px;right:4px;background:rgba(231,76,60,0.9);color:white;border:none;border-radius:50%;width:22px;height:22px;font-size:11px;cursor:pointer;">✕</button>
-          </div>
-        `).join('')}
-      </div>
-      <div style="font-size:12px;color:rgba(29,158,117,0.8);margin-top:6px;font-weight:700;text-align:center;">✅ ${myPhotos.length} фото добавлено</div>`;
-    window.rsGetAfterPhotos = (id) => rsPhotos[id] || [];
+    descEl.style.display = 'none';
   }
 
-  // Actions
+  // ПОСЛЕ area — fills bottom half
+  const myPhotos = rsPhotos[t.id] || [];
+  const afterEl = document.getElementById('rs-after-area');
+  window.rsGetAfterPhotos = (id) => rsPhotos[id] || [];
+
+  if (myPhotos.length === 0) {
+    afterEl.innerHTML = `
+      <div style="text-align:center;color:rgba(255,255,255,0.4);padding:20px;">
+        <div style="font-size:40px;margin-bottom:8px;">📷</div>
+        <div style="font-size:14px;font-weight:700;">Сними с того же ракурса</div>
+        <div style="font-size:11px;margin-top:4px;opacity:0.7;">используй кнопки ниже</div>
+      </div>`;
+  } else {
+    // Grid of after photos
+    afterEl.innerHTML = `
+      <div style="display:grid;grid-template-columns:repeat(${Math.min(myPhotos.length+1,3)},1fr);gap:3px;width:100%;height:100%;">
+        ${myPhotos.map((src,i) => `
+          <div onclick="openFullscreen(rsGetAfterPhotos('${t.id}'),${i})"
+            style="position:relative;overflow:hidden;cursor:zoom-in;background:#000;">
+            <img src="${src}" style="width:100%;height:100%;object-fit:cover;">
+            <button onclick="event.stopPropagation();rsRemovePhoto('${t.id}',${i})"
+              style="position:absolute;top:4px;right:4px;background:rgba(231,76,60,0.9);color:white;border:none;border-radius:50%;width:22px;height:22px;font-size:11px;cursor:pointer;z-index:2;">✕</button>
+          </div>
+        `).join('')}
+        <label style="display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(29,158,117,0.15);border:2px dashed rgba(29,158,117,0.4);cursor:pointer;gap:4px;">
+          <span style="font-size:24px;">➕</span>
+          <span style="font-size:10px;color:rgba(29,158,117,0.8);font-weight:700;">ещё</span>
+          <input type="file" accept="image/*" capture="environment" style="display:none;" onchange="rsAddPhoto(event,'${t.id}')">
+        </label>
+      </div>`;
+  }
+
+  // Bottom controls
   const actEl = document.getElementById('rs-actions');
   actEl.innerHTML = `
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
-      <label style="background:#1D9E75;color:white;border-radius:16px;padding:14px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:900;font-size:14px;">
-        📷 Камера
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px;">
+      <label style="background:#1D9E75;color:white;border-radius:14px;padding:12px 8px;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:900;font-size:12px;">
+        📷<span>Камера</span>
         <input type="file" accept="image/*" capture="environment" style="display:none;" onchange="rsAddPhoto(event,'${t.id}')">
       </label>
-      <label style="background:#2980B9;color:white;border-radius:16px;padding:14px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:900;font-size:14px;">
-        🖼️ Галерея
+      <label style="background:#2980B9;color:white;border-radius:14px;padding:12px 8px;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:900;font-size:12px;">
+        🖼️<span>Галерея</span>
         <input type="file" accept="image/*" multiple style="display:none;" onchange="rsAddPhotos(event,'${t.id}')">
       </label>
-    </div>
-    <div style="display:grid;grid-template-columns:${rsIndex < rsSeries.length-1 ? '1fr 1fr' : '1fr'};gap:8px;">
-      ${rsIndex < rsSeries.length-1 ? `
-        <button onclick="rsSkip()" style="background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.7);border:none;border-radius:16px;padding:14px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;">
-          Пропустить →
-        </button>
-      ` : ''}
-      <button onclick="rsNext()" style="background:${myPhotos.length>0?'#1D9E75':'rgba(29,158,117,0.3)'};color:white;border:none;border-radius:16px;padding:14px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:900;cursor:pointer;">
-        ${rsIndex < rsSeries.length-1 ? '✅ Готово → Следующий' : '📤 Отправить всё'}
+      <button onclick="rsSkip()" style="background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.7);border:none;border-radius:14px;padding:12px 8px;font-family:'Nunito',sans-serif;font-size:12px;font-weight:800;cursor:pointer;">
+        Пропустить →
       </button>
     </div>
-    ${done > 0 ? `<div style="text-align:center;margin-top:8px;font-size:12px;color:rgba(255,255,255,0.4);font-weight:600;">Готово ракурсов: ${done} из ${rsSeries.length}</div>` : ''}
+    <button onclick="rsNext()" style="width:100%;background:${myPhotos.length>0?'#1D9E75':'rgba(255,255,255,0.1)'};color:white;border:none;border-radius:16px;padding:14px;font-family:'Nunito',sans-serif;font-size:16px;font-weight:900;cursor:pointer;">
+      ${rsIndex < rsSeries.length-1
+        ? (myPhotos.length>0 ? '✅ Готово → Следующий ракурс' : '→ Следующий ракурс')
+        : '📤 Отправить все фото'}
+    </button>
   `;
 }
 
