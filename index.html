@@ -1154,6 +1154,111 @@ body {
   </div>
 </div>
 
+<!-- ═══ SCREEN: BRIGADIER SECTIONS ═══ -->
+<div id="screen-brig-sections" class="screen">
+  <div class="topbar" style="background:linear-gradient(135deg,#7F3FBF,#5B2D8A);">
+    <div class="topbar-back" onclick="showBrigadierHome(currentUser.worker)">←</div>
+    <div class="topbar-title">📋 Разделы</div>
+  </div>
+  <div style="padding:16px 16px 100px;">
+
+    <!-- Порталы -->
+    <div onclick="showBrigPortals()" style="background:var(--white);border-radius:var(--radius);padding:18px;margin-bottom:12px;box-shadow:var(--shadow);display:flex;align-items:center;gap:14px;cursor:pointer;border-left:5px solid #E74C3C;">
+      <div style="font-size:36px;">🚪</div>
+      <div style="flex:1;">
+        <div style="font-size:16px;font-weight:800;color:var(--ink);">Порталы</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px;">Все заявки «Наш город»</div>
+        <div id="brig-portals-count" style="font-size:11px;font-weight:800;color:#E74C3C;margin-top:4px;"></div>
+      </div>
+      <div style="color:var(--muted);font-size:20px;">›</div>
+    </div>
+
+    <!-- ЦККБ -->
+    <div onclick="openSection('tskkb')" style="background:var(--white);border-radius:var(--radius);padding:18px;margin-bottom:12px;box-shadow:var(--shadow);display:flex;align-items:center;gap:14px;cursor:pointer;border-left:5px solid #9B59B6;">
+      <div style="font-size:36px;">🔍</div>
+      <div style="flex:1;">
+        <div style="font-size:16px;font-weight:800;color:var(--ink);">ЦККБ</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px;">Замечания от инспектора</div>
+        <div id="brig-tskkb-count" style="font-size:11px;font-weight:800;color:#9B59B6;margin-top:4px;"></div>
+      </div>
+      <div style="color:var(--muted);font-size:20px;">›</div>
+    </div>
+
+    <!-- Мониторы -->
+    <div onclick="openSection('monitors')" style="background:var(--white);border-radius:var(--radius);padding:18px;margin-bottom:12px;box-shadow:var(--shadow);display:flex;align-items:center;gap:14px;cursor:pointer;border-left:5px solid #2980B9;">
+      <div style="font-size:36px;">🖥️</div>
+      <div style="flex:1;">
+        <div style="font-size:16px;font-weight:800;color:var(--ink);">Мониторы</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px;">Нарушения из системы</div>
+        <div id="brig-monitors-count" style="font-size:11px;font-weight:800;color:#2980B9;margin-top:4px;"></div>
+      </div>
+      <div style="color:var(--muted);font-size:20px;">›</div>
+    </div>
+
+    <!-- Фото от начальства -->
+    <div onclick="openSection('boss-photos')" style="background:var(--white);border-radius:var(--radius);padding:18px;margin-bottom:12px;box-shadow:var(--shadow);display:flex;align-items:center;gap:14px;cursor:pointer;border-left:5px solid #1D9E75;">
+      <div style="font-size:36px;">📸</div>
+      <div style="flex:1;">
+        <div style="font-size:16px;font-weight:800;color:var(--ink);">Фото от начальства</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px;">Инструкции и ракурсы</div>
+      </div>
+      <div style="color:var(--muted);font-size:20px;">›</div>
+    </div>
+
+    <!-- Трекер ракурсов -->
+    <div onclick="showRakursTracker()" style="background:var(--white);border-radius:var(--radius);padding:18px;margin-bottom:12px;box-shadow:var(--shadow);display:flex;align-items:center;gap:14px;cursor:pointer;border-left:5px solid #E07B2B;">
+      <div style="font-size:36px;">📊</div>
+      <div style="flex:1;">
+        <div style="font-size:16px;font-weight:800;color:var(--ink);">Трекер ракурсов</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px;" id="brig-rakurs-count">Загрузка...</div>
+      </div>
+      <div style="color:var(--muted);font-size:20px;">›</div>
+    </div>
+
+  </div>
+
+  <div class="bottom-nav">
+    <div class="nav-item" onclick="showBrigadierHome(currentUser.worker)"><div class="nav-icon">🏠</div><div class="nav-label">Главная</div></div>
+    <div class="nav-item active"><div class="nav-icon">📋</div><div class="nav-label">Разделы</div></div>
+    <div class="nav-item" onclick="showBrigMyTasks()"><div class="nav-icon">✅</div><div class="nav-label">Мои задачи</div></div>
+    <div class="nav-item" onclick="logout()"><div class="nav-icon">👋</div><div class="nav-label">Выйти</div></div>
+  </div>
+</div>
+
+<!-- ═══ SCREEN: BRIGADIER MY TASKS ═══ -->
+<div id="screen-brig-tasks" class="screen">
+  <div class="topbar" style="background:linear-gradient(135deg,#7F3FBF,#5B2D8A);">
+    <div class="topbar-back" onclick="showBrigadierHome(currentUser.worker)">←</div>
+    <div class="topbar-title">✅ Мои задачи</div>
+  </div>
+  <div style="padding:16px 16px 100px;" id="brig-my-tasks-screen"></div>
+
+  <div class="bottom-nav">
+    <div class="nav-item" onclick="showBrigadierHome(currentUser.worker)"><div class="nav-icon">🏠</div><div class="nav-label">Главная</div></div>
+    <div class="nav-item" onclick="showBrigSections()"><div class="nav-icon">📋</div><div class="nav-label">Разделы</div></div>
+    <div class="nav-item active"><div class="nav-icon">✅</div><div class="nav-label">Мои задачи</div></div>
+    <div class="nav-item" onclick="logout()"><div class="nav-icon">👋</div><div class="nav-label">Выйти</div></div>
+  </div>
+</div>
+
+<!-- ═══ SCREEN: BRIGADIER PORTALS ═══ -->
+<div id="screen-brig-portals" class="screen">
+  <div class="topbar" style="background:#E74C3C;">
+    <div class="topbar-back" onclick="showBrigSections()">←</div>
+    <div class="topbar-title">🚪 Все порталы</div>
+    <div id="brig-portals-header-count" style="font-size:12px;color:rgba(255,255,255,0.85);font-weight:800;"></div>
+  </div>
+  <div style="padding:12px 16px 100px;">
+    <div style="display:flex;gap:8px;margin-bottom:12px;overflow-x:auto;">
+      <button class="ftab active" data-bp="all" onclick="setBrigPortalFilter('all',this)">Все</button>
+      <button class="ftab" data-bp="new" onclick="setBrigPortalFilter('new',this)">🔴 Активные</button>
+      <button class="ftab" data-bp="done_pending" onclick="setBrigPortalFilter('done_pending',this)">⏳ Проверка</button>
+      <button class="ftab" data-bp="done" onclick="setBrigPortalFilter('done',this)">✅ Закрыты</button>
+    </div>
+    <div id="brig-portals-list"></div>
+  </div>
+</div>
+
 <!-- ═══ SCREEN: BRIGADIER ═══ -->
 <div id="screen-brigadier" class="screen">
   <div style="background:linear-gradient(135deg,#7F3FBF,#5B2D8A);padding:28px 20px 80px;position:relative;overflow:hidden;">
@@ -1197,17 +1302,17 @@ body {
   </div>
 
   <div class="bottom-nav">
-    <div class="nav-item active" onclick="showBrigadierHome(currentUser.worker)">
+    <div class="nav-item active" id="brig-nav-home" onclick="showBrigadierHome(currentUser.worker)">
       <div class="nav-icon">🏠</div>
       <div class="nav-label">Главная</div>
     </div>
-    <div class="nav-item" onclick="showAllPortalsBrig()">
-      <div class="nav-icon">🚪</div>
-      <div class="nav-label">Порталы</div>
-    </div>
-    <div class="nav-item" onclick="switchTab('sections')">
+    <div class="nav-item" id="brig-nav-sections" onclick="showBrigSections()">
       <div class="nav-icon">📋</div>
       <div class="nav-label">Разделы</div>
+    </div>
+    <div class="nav-item" id="brig-nav-tasks" onclick="showBrigMyTasks()">
+      <div class="nav-icon">✅</div>
+      <div class="nav-label">Мои задачи</div>
     </div>
     <div class="nav-item" onclick="logout()">
       <div class="nav-icon">👋</div>
@@ -2961,6 +3066,97 @@ function swMarkPortalDone() {
   saveTasks();
   showToast('✅ Отправлено начальнику!');
   setTimeout(() => showSimpleWorkerHome(currentUser.worker), 1000);
+}
+
+function showBrigSections() {
+  showScreen('screen-brig-sections');
+  // Update counts
+  const portals = tasks.filter(t => t.type === 'portal' && t.status === 'new').length;
+  const el = document.getElementById('brig-portals-count');
+  if (el) el.textContent = portals > 0 ? `🔴 ${portals} активных` : '✅ Нет активных';
+
+  ['tskkb','monitors'].forEach(type => {
+    const count = tasks.filter(t => t.sectionType === type && t.status === 'new').length;
+    const cel = document.getElementById(`brig-${type}-count`);
+    if (cel) cel.textContent = count > 0 ? `🔴 ${count} новых` : '';
+  });
+
+  // Rakurs summary
+  const allR = tasks.filter(t => t.type === 'rakurs');
+  const doneR = allR.filter(t => t.status === 'done').length;
+  const brigR = document.getElementById('brig-rakurs-count');
+  if (brigR) brigR.textContent = `${doneR}/${allR.length} отработано`;
+}
+
+function showBrigMyTasks() {
+  showScreen('screen-brig-tasks');
+  const w = currentUser?.worker;
+  if (!w) return;
+  const myTasks = sortByDeadline(tasks.filter(t => t.workerId === w.id));
+  const el = document.getElementById('brig-my-tasks-screen');
+  if (myTasks.length === 0) {
+    el.innerHTML = `<div style="text-align:center;padding:60px 20px;color:var(--muted);">
+      <div style="font-size:48px;">🎉</div>
+      <div style="font-size:18px;font-weight:800;margin-top:12px;">Нет личных задач</div>
+    </div>`;
+  } else {
+    el.innerHTML = myTasks.map(t => buildBrigTaskCard(t, true)).join('');
+  }
+}
+
+let brigPortalFilter = 'all';
+
+function showBrigPortals() {
+  showScreen('screen-brig-portals');
+  brigPortalFilter = 'all';
+  document.querySelectorAll('[data-bp]').forEach(b => b.classList.remove('active'));
+  document.querySelector('[data-bp="all"]')?.classList.add('active');
+  renderBrigPortals();
+}
+
+function setBrigPortalFilter(f, btn) {
+  brigPortalFilter = f;
+  document.querySelectorAll('[data-bp]').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderBrigPortals();
+}
+
+function renderBrigPortals() {
+  let portals = tasks.filter(t => t.type === 'portal');
+  if (brigPortalFilter !== 'all') portals = portals.filter(t => t.status === brigPortalFilter);
+  portals = sortByDeadline(portals);
+
+  const countEl = document.getElementById('brig-portals-header-count');
+  if (countEl) countEl.textContent = `${portals.length} записей`;
+
+  const list = document.getElementById('brig-portals-list');
+  const colors = { new: '#E74C3C', done_pending: '#F39C12', done: '#1D9E75' };
+  const labels = { new: '🔴 Активен', done_pending: '⏳ Проверка', done: '✅ Закрыт' };
+
+  if (portals.length === 0) {
+    list.innerHTML = `<div style="text-align:center;padding:40px;color:var(--muted);">
+      <div style="font-size:40px;">🎉</div><div style="font-size:16px;font-weight:800;margin-top:8px;">Нет записей</div>
+    </div>`;
+    return;
+  }
+
+  list.innerHTML = portals.map(t => {
+    const w = getAllWorkers().find(x => x.id === t.workerId);
+    const urgency = getUrgency(t.deadline);
+    return `
+      <div style="background:var(--white);border-radius:16px;padding:14px;margin-bottom:10px;box-shadow:var(--shadow);border-left:5px solid ${colors[t.status]||'#ccc'};">
+        <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:6px;">
+          <div style="font-size:22px;">🚪</div>
+          <div style="flex:1;">
+            <div style="font-size:14px;font-weight:800;">${t.address}</div>
+            <div style="font-size:11px;color:var(--muted);">№ ${t.number||'—'} · ${t.problem||'—'}</div>
+            ${t.deadline?`<div style="font-size:10px;font-weight:800;color:${urgency.color};margin-top:2px;">${urgency.icon} ${t.deadline}</div>`:''}
+            ${w?`<div style="font-size:10px;color:var(--green-d);font-weight:700;margin-top:2px;">🧹 ${w.short}</div>`:''}
+          </div>
+          <span style="font-size:10px;font-weight:800;padding:4px 8px;border-radius:10px;background:${colors[t.status]}22;color:${colors[t.status]};">${labels[t.status]||'—'}</span>
+        </div>
+      </div>`;
+  }).join('');
 }
 
 // ─── RAKURS TRACKER ───
