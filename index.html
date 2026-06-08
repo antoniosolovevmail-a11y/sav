@@ -3142,12 +3142,42 @@ function swOpenTask(id) {
   // Action buttons — BIG
   if (t.type === 'portal' && t.status === 'new') {
     content += `
-      <button onclick="swMarkPortalDone()" style="width:100%;background:var(--green);color:white;border:none;border-radius:20px;padding:22px;font-family:'Nunito',sans-serif;font-size:20px;font-weight:900;cursor:pointer;margin-bottom:10px;box-shadow:0 6px 20px rgba(29,158,117,0.4);">
-        ✅ Я закрыл заявку в «Наш город»
+      <!-- Фото отработки портала -->
+      <div style="background:var(--white);border-radius:20px;padding:18px;margin-bottom:14px;box-shadow:var(--shadow);">
+        <div style="font-size:13px;font-weight:800;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:1px;">📷 Фото выполненной работы</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">Прикрепи фото — начальник увидит что сделано</div>
+        <div id="sw-photo-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;min-height:50px;"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <label style="background:var(--green);color:white;border-radius:16px;padding:16px;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:900;font-size:15px;">
+            📷<span>Камера</span>
+            <input type="file" accept="image/*" capture="environment" style="display:none;" onchange="swAddPhoto(event)">
+          </label>
+          <label style="background:var(--blue);color:white;border-radius:16px;padding:16px;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:900;font-size:15px;">
+            🖼️<span>Галерея</span>
+            <input type="file" accept="image/*" multiple style="display:none;" onchange="swAddPhotos(event)">
+          </label>
+        </div>
+      </div>
+      <button onclick="swMarkPortalDone()" style="width:100%;background:var(--green);color:white;border:none;border-radius:20px;padding:20px;font-family:'Nunito',sans-serif;font-size:18px;font-weight:900;cursor:pointer;margin-bottom:10px;box-shadow:0 6px 20px rgba(29,158,117,0.4);">
+        ✅ Закрыл в «Наш город» — отправить
       </button>
-      <button onclick="showToast('Сообщение отправлено 📨')" style="width:100%;background:var(--red-l);color:var(--red);border:2px solid var(--red);border-radius:20px;padding:18px;font-family:'Nunito',sans-serif;font-size:17px;font-weight:900;cursor:pointer;">
+      <button onclick="showToast('Сообщение отправлено 📨')" style="width:100%;background:var(--red-l);color:var(--red);border:2px solid var(--red);border-radius:20px;padding:16px;font-family:'Nunito',sans-serif;font-size:16px;font-weight:900;cursor:pointer;">
         ❗ Есть проблема — сообщить
       </button>
+    `;
+  } else if (t.type === 'portal' && t.status === 'done_pending') {
+    // Показываем отправленные фото если есть
+    const sentPhotos = t.responsePhotos || (t.responsePhotoData ? [t.responsePhotoData] : []);
+    content += `
+      <div style="background:#FEF9E7;border-radius:20px;padding:18px;margin-bottom:14px;">
+        <div style="font-size:18px;font-weight:900;color:#9A6D00;margin-bottom:6px;">⏳ На проверке у начальника</div>
+        ${sentPhotos.length > 0 ? `
+          <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">Отправлено ${sentPhotos.length} фото</div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;">
+            ${sentPhotos.map((src,i) => `<div onclick="openFullscreen(getPortalSentPhotos('${t.id}'),${i})" style="aspect-ratio:1;border-radius:10px;overflow:hidden;cursor:zoom-in;"><img src="${src}" style="width:100%;height:100%;object-fit:cover;"></div>`).join('')}
+          </div>
+        ` : ''}
+      </div>
     `;
   } else if (t.type === 'rakurs' && t.status === 'new') {
     content += `
@@ -3328,26 +3358,49 @@ async function swSendRakurs() {
   }, 2500);
 }
 
-function swMarkPortalDone() {
+async function swMarkPortalDone() {
   const t = tasks.find(x => x.id === currentTaskId);
+  const w = currentUser?.worker;
+  const photosCopy = [...swPhotos];
+
+  const overlay = showUploadOverlay(Math.max(photosCopy.length, 1));
+
+  let yaUrls = null;
+  if (photosCopy.length > 0) {
+    try {
+      yaUrls = await uploadPhotosToYaDisk(
+        photosCopy, w ? w.short : 'дворник', t.address, t.id,
+        (done, total) => updateUploadProgress(overlay, done, total)
+      );
+    } catch(e) {}
+  } else {
+    updateUploadProgress(overlay, 1, 1);
+  }
+
   t.status = 'done_pending';
+  if (photosCopy.length > 0) {
+    t.responsePhotos = photosCopy;
+    t.responsePhotoData = photosCopy[0];
+    if (yaUrls) t.yaPhotoUrls = yaUrls;
+  }
   saveTasks();
 
-  const content = document.getElementById('st-content');
-  content.innerHTML = `
-    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:70vh;text-align:center;padding:24px;">
-      <div style="font-size:100px;margin-bottom:16px;animation:popIn 0.4s ease-out;">✅</div>
-      <div style="font-size:28px;font-weight:900;color:var(--green);margin-bottom:8px;">Готово!</div>
-      <div style="font-size:16px;color:var(--muted);margin-bottom:4px;">Заявка отправлена на проверку</div>
-      <div style="font-size:14px;color:var(--muted);">Начальник проверит и закроет 👍</div>
-      <div style="margin-top:32px;background:var(--green-l);border-radius:20px;padding:16px 24px;">
-        <div style="font-size:13px;color:var(--green-d);font-weight:700;">📍 ${t.address}</div>
-      </div>
-      <div style="margin-top:24px;font-size:13px;color:var(--muted);">Возврат на главную через 3 сек...</div>
-    </div>
-  `;
+  showUploadSuccess(overlay,
+    photosCopy.length > 0 ? photosCopy.length : 0,
+    t.address
+  );
+  swPhotos = [];
 
-  setTimeout(() => showSimpleWorkerHome(currentUser.worker), 3000);
+  setTimeout(() => {
+    overlay.remove();
+    if (currentUser?.worker?.role === 'brigadier') showBrigadierHome(currentUser.worker);
+    else showSimpleWorkerHome(currentUser.worker);
+  }, 2500);
+}
+
+function getPortalSentPhotos(taskId) {
+  const t = tasks.find(x => x.id === taskId);
+  return t ? (t.responsePhotos || (t.responsePhotoData ? [t.responsePhotoData] : [])) : [];
 }
 
 function showBrigSections() {
