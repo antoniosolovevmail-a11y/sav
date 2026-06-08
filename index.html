@@ -2293,44 +2293,49 @@ function showBossHome() {
         <div class="ac-type">${t.type === 'portal' ? '🚪 Портал' : '📸 Ракурс'}</div>
         ${t.type === 'rakurs' && (t.responsePhotos?.length || t.responsePhotoData) ? `
         <div style="margin-bottom:10px;">
-          <div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">
-            📸 Сравнение ДО / ПОСЛЕ
-          </div>
+          <div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">📸 Сравнение ДО / ПОСЛЕ</div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
-            <!-- ДО -->
             <div>
-              <div style="font-size:10px;font-weight:800;color:#E74C3C;text-align:center;margin-bottom:4px;">🔴 ДО (замечание)</div>
+              <div style="font-size:10px;font-weight:800;color:#E74C3C;text-align:center;margin-bottom:4px;">🔴 ДО</div>
               ${(t.origPhotos?.[0] || t.origPhotoData) ? `
-                <div onclick="openFullscreen(getOrigPhotos('${t.id}'),0)" style="aspect-ratio:1;border-radius:10px;overflow:hidden;cursor:zoom-in;position:relative;">
+                <div class="open-orig-btn" style="aspect-ratio:1;border-radius:10px;overflow:hidden;cursor:zoom-in;position:relative;">
                   <img src="${t.origPhotos?.[0] || t.origPhotoData}" style="width:100%;height:100%;object-fit:cover;">
                   <div style="position:absolute;bottom:2px;right:4px;background:rgba(231,76,60,0.85);color:white;font-size:9px;font-weight:800;padding:2px 5px;border-radius:6px;">🔍</div>
                 </div>
               ` : `<div style="aspect-ratio:1;border-radius:10px;background:var(--bg);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:11px;font-weight:700;">Нет фото</div>`}
             </div>
-            <!-- ПОСЛЕ -->
             <div>
-              <div style="font-size:10px;font-weight:800;color:#1D9E75;text-align:center;margin-bottom:4px;">✅ ПОСЛЕ (отработка)</div>
-              <div onclick="openTaskPhoto('${t.id}',0)" style="aspect-ratio:1;border-radius:10px;overflow:hidden;cursor:zoom-in;position:relative;">
+              <div style="font-size:10px;font-weight:800;color:#1D9E75;text-align:center;margin-bottom:4px;">✅ ПОСЛЕ</div>
+              <div class="open-resp-btn" style="aspect-ratio:1;border-radius:10px;overflow:hidden;cursor:zoom-in;position:relative;">
                 <img src="${t.responsePhotos?.[0]||t.responsePhotoData}" style="width:100%;height:100%;object-fit:cover;">
                 ${(t.responsePhotos?.length||0)>1?`<div style="position:absolute;bottom:2px;right:4px;background:rgba(29,158,117,0.85);color:white;font-size:9px;font-weight:800;padding:2px 5px;border-radius:6px;">+${t.responsePhotos.length-1}</div>`:''}
                 <div style="position:absolute;bottom:2px;left:4px;background:rgba(0,0,0,0.5);color:white;font-size:9px;font-weight:800;padding:2px 5px;border-radius:6px;">🔍</div>
               </div>
             </div>
           </div>
-          <button onclick="downloadAllPhotos(getTaskPhotos('${t.id}'),'${(w?w.short:'')}_${t.address.replace(/[^а-яА-Яa-zA-Z0-9]/g,'_')}')"
-            style="width:100%;margin-bottom:6px;background:var(--blue);color:white;border:none;border-radius:12px;padding:10px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer;">
+          <button class="dl-photos-btn" style="width:100%;margin-bottom:6px;background:var(--blue);color:white;border:none;border-radius:12px;padding:10px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer;">
             ⬇️ Скачать все фото (${t.responsePhotos ? t.responsePhotos.length : 1} шт.)
           </button>
-          ${t.yaPhotoUrls ? `<a href="https://disk.yandex.ru/client/disk/Жилищник" target="_blank" style="display:block;width:100%;margin-bottom:6px;background:#FFCC00;color:#1A1A2E;border:none;border-radius:12px;padding:10px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer;text-align:center;text-decoration:none;">📂 Яндекс.Диск</a>` : ''}
         </div>
         ` : `<div style="padding:8px 0;font-size:13px;color:var(--muted);">📋 № ${t.number || '—'} — ${t.problem || t.type_violation || '—'}</div>`}
         <div class="ac-btns">
-          <button class="ac-btn ac-approve" onclick="taskAction('approve','${t.id}')">✅ Принято</button>
-          <button class="ac-btn ac-reject" onclick="taskAction('reject','${t.id}')">↩️ Доработать</button>
+          <button class="ac-btn ac-approve btn-approve">✅ Принято</button>
+          <button class="ac-btn ac-reject btn-reject">↩️ Доработать</button>
         </div>
-        <button onclick="taskAction('delete','${t.id}')" style="width:100%;margin-top:8px;background:var(--red-l);color:var(--red);border:none;border-radius:12px;padding:10px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer;">🗑️ Удалить задачу</button>
-        ${t.type === 'portal' && t.hasPdf ? `<button onclick="deletePortal('${t.id}')" style="width:100%;margin-top:6px;background:#EBF5FB;color:#2980B9;border:none;border-radius:12px;padding:10px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer;">🗑️ Удалить PDF</button>` : ''}
+        <button class="btn-delete-task" style="width:100%;margin-top:8px;background:var(--red-l);color:var(--red);border:none;border-radius:12px;padding:10px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer;">🗑️ Удалить задачу</button>
+        ${t.type === 'portal' && t.hasPdf ? `<button class="btn-delete-pdf" style="width:100%;margin-top:6px;background:#EBF5FB;color:#2980B9;border:none;border-radius:12px;padding:10px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer;">🗑️ Удалить PDF</button>` : ''}
       `;
+
+      // Attach events via addEventListener — no inline id issues
+      const tid = t.id;
+      card.querySelector('.btn-approve')?.addEventListener('click', () => approveTask(tid));
+      card.querySelector('.btn-reject')?.addEventListener('click', () => rejectTask(tid));
+      card.querySelector('.btn-delete-task')?.addEventListener('click', () => deleteTask(tid));
+      card.querySelector('.btn-delete-pdf')?.addEventListener('click', () => deletePortal(tid));
+      card.querySelector('.dl-photos-btn')?.addEventListener('click', () => downloadAllPhotos(getTaskPhotos(tid), (w?w.short:'') + '_фото'));
+      card.querySelector('.open-orig-btn')?.addEventListener('click', () => openFullscreen(getOrigPhotos(tid), 0));
+      card.querySelector('.open-resp-btn')?.addEventListener('click', () => openTaskPhoto(tid, 0));
+
       approvalsEl.appendChild(card);
     });
   }
@@ -2962,12 +2967,16 @@ function swOpenTask(id) {
   // PDF
   if (t.hasPdf) {
     content += `
-      <div onclick="togglePdf()" style="background:var(--blue-l);border-radius:20px;padding:18px;margin-bottom:14px;cursor:pointer;display:flex;align-items:center;gap:14px;">
-        <span style="font-size:36px;">📄</span>
-        <div>
-          <div style="font-size:16px;font-weight:900;color:var(--blue);">Открыть документ</div>
-          <div style="font-size:12px;color:var(--muted);">${t.pdfName||'Документ.pdf'}</div>
+      <div style="background:var(--white);border-radius:20px;overflow:hidden;margin-bottom:14px;box-shadow:var(--shadow);">
+        <div style="background:var(--blue);padding:14px 16px;display:flex;align-items:center;gap:10px;">
+          <span style="font-size:22px;">📄</span>
+          <div>
+            <div style="font-size:15px;font-weight:900;color:white;">Документ заявки</div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.7);">${t.pdfName||'Документ.pdf'}</div>
+          </div>
         </div>
+        ${t.pdfData ? `<iframe src="${t.pdfData}" style="width:100%;height:500px;border:none;" title="PDF"></iframe>`
+        : `<div style="padding:24px;text-align:center;color:var(--muted);font-size:13px;font-weight:700;">📄 Файл загружается...</div>`}
       </div>
     `;
   }
