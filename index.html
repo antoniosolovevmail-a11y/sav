@@ -2292,32 +2292,44 @@ function showBossHome() {
         </div>
         <div class="ac-type">${t.type === 'portal' ? '🚪 Портал' : '📸 Ракурс'}</div>
         ${t.type === 'rakurs' && (t.responsePhotos?.length || t.responsePhotoData) ? `
-        <div style="margin-bottom:8px;">
-          <div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">
-            📷 Фото от дворника (${t.responsePhotos ? t.responsePhotos.length : 1} шт.)
+        <div style="margin-bottom:10px;">
+          <div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">
+            📸 Сравнение ДО / ПОСЛЕ
           </div>
-          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:8px;" id="photos-${t.id}">
-            ${(t.responsePhotos || [t.responsePhotoData]).map((src, i) => `
-              <div style="position:relative;aspect-ratio:1;border-radius:8px;overflow:hidden;cursor:zoom-in;" onclick="openTaskPhoto('${t.id}',${i})">
-                <img src="${src}" style="width:100%;height:100%;object-fit:cover;" alt="Фото ${i+1}">
-                <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.45);color:white;font-size:9px;font-weight:800;text-align:center;padding:3px;">
-                  🔍 №${i+1}
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+            <!-- ДО -->
+            <div>
+              <div style="font-size:10px;font-weight:800;color:#E74C3C;text-align:center;margin-bottom:4px;">🔴 ДО (замечание)</div>
+              ${(t.origPhotos?.[0] || t.origPhotoData) ? `
+                <div onclick="openFullscreen(getOrigPhotos('${t.id}'),0)" style="aspect-ratio:1;border-radius:10px;overflow:hidden;cursor:zoom-in;position:relative;">
+                  <img src="${t.origPhotos?.[0] || t.origPhotoData}" style="width:100%;height:100%;object-fit:cover;">
+                  <div style="position:absolute;bottom:2px;right:4px;background:rgba(231,76,60,0.85);color:white;font-size:9px;font-weight:800;padding:2px 5px;border-radius:6px;">🔍</div>
                 </div>
+              ` : `<div style="aspect-ratio:1;border-radius:10px;background:var(--bg);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:11px;font-weight:700;">Нет фото</div>`}
+            </div>
+            <!-- ПОСЛЕ -->
+            <div>
+              <div style="font-size:10px;font-weight:800;color:#1D9E75;text-align:center;margin-bottom:4px;">✅ ПОСЛЕ (отработка)</div>
+              <div onclick="openTaskPhoto('${t.id}',0)" style="aspect-ratio:1;border-radius:10px;overflow:hidden;cursor:zoom-in;position:relative;">
+                <img src="${t.responsePhotos?.[0]||t.responsePhotoData}" style="width:100%;height:100%;object-fit:cover;">
+                ${(t.responsePhotos?.length||0)>1?`<div style="position:absolute;bottom:2px;right:4px;background:rgba(29,158,117,0.85);color:white;font-size:9px;font-weight:800;padding:2px 5px;border-radius:6px;">+${t.responsePhotos.length-1}</div>`:''}
+                <div style="position:absolute;bottom:2px;left:4px;background:rgba(0,0,0,0.5);color:white;font-size:9px;font-weight:800;padding:2px 5px;border-radius:6px;">🔍</div>
               </div>
-            `).join('')}
+            </div>
           </div>
-          <button onclick="downloadAllPhotos(getTaskPhotos('${t.id}'), '${(w?w.short:'')}_${t.address.replace(/[^а-яА-Яa-zA-Z0-9]/g,'_')}')"
-            style="width:100%;margin-bottom:8px;background:var(--blue);color:white;border:none;border-radius:12px;padding:12px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;">
+          <button onclick="downloadAllPhotos(getTaskPhotos('${t.id}'),'${(w?w.short:'')}_${t.address.replace(/[^а-яА-Яa-zA-Z0-9]/g,'_')}')"
+            style="width:100%;margin-bottom:6px;background:var(--blue);color:white;border:none;border-radius:12px;padding:10px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer;">
             ⬇️ Скачать все фото (${t.responsePhotos ? t.responsePhotos.length : 1} шт.)
           </button>
-          ${t.yaPhotoUrls ? `<a href="https://disk.yandex.ru/client/disk/Жилищник" target="_blank" style="display:block;width:100%;margin-bottom:8px;background:#FFCC00;color:#1A1A2E;border:none;border-radius:12px;padding:12px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;text-align:center;text-decoration:none;">📂 Открыть на Яндекс.Диске</a>` : ''}
+          ${t.yaPhotoUrls ? `<a href="https://disk.yandex.ru/client/disk/Жилищник" target="_blank" style="display:block;width:100%;margin-bottom:6px;background:#FFCC00;color:#1A1A2E;border:none;border-radius:12px;padding:10px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer;text-align:center;text-decoration:none;">📂 Яндекс.Диск</a>` : ''}
         </div>
         ` : `<div style="padding:8px 0;font-size:13px;color:var(--muted);">📋 № ${t.number || '—'} — ${t.problem || t.type_violation || '—'}</div>`}
         <div class="ac-btns">
-          <button class="ac-btn ac-approve" onclick="approveTask('${t.id}')">✅ Принято</button>
-          <button class="ac-btn ac-reject" onclick="rejectTask('${t.id}')">↩️ Доработать</button>
+          <button class="ac-btn ac-approve" onclick="taskAction('approve','${t.id}')">✅ Принято</button>
+          <button class="ac-btn ac-reject" onclick="taskAction('reject','${t.id}')">↩️ Доработать</button>
         </div>
-        ${t.type === 'portal' && t.hasPdf ? `<button class="delete-portal-btn" style="display:block;margin-top:8px;" onclick="deletePortal('${t.id}')">🗑️ Удалить PDF</button>` : ''}
+        <button onclick="taskAction('delete','${t.id}')" style="width:100%;margin-top:8px;background:var(--red-l);color:var(--red);border:none;border-radius:12px;padding:10px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer;">🗑️ Удалить задачу</button>
+        ${t.type === 'portal' && t.hasPdf ? `<button onclick="deletePortal('${t.id}')" style="width:100%;margin-top:6px;background:#EBF5FB;color:#2980B9;border:none;border-radius:12px;padding:10px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer;">🗑️ Удалить PDF</button>` : ''}
       `;
       approvalsEl.appendChild(card);
     });
@@ -2343,6 +2355,7 @@ function showBossHome() {
         ${t.deadline ? `<div style="font-size:10px;font-weight:800;color:${urgency.color};margin-top:2px;">${urgency.icon} Срок: ${t.deadline}</div>` : ''}
       </div>
       <span class="pli-status" style="background:${colors[t.status]}22;color:${colors[t.status]}">${labels[t.status]}</span>
+      <button onclick="event.stopPropagation();taskAction('delete','${t.id}')" style="background:var(--red-l);color:var(--red);border:none;border-radius:8px;padding:6px 8px;font-size:13px;cursor:pointer;margin-left:4px;flex-shrink:0;">🗑️</button>
     `;
     portalsEl.appendChild(item);
   });
@@ -2369,7 +2382,8 @@ function showBossHome() {
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
         <span class="pli-status" style="background:${colors[t.status]}22;color:${colors[t.status]}">${labels[t.status]}</span>
-        ${hasPhoto ? `<button onclick="downloadAllPhotos(${JSON.stringify(t.responsePhotos || [t.responsePhotoData])},'${(w?w.short:'')}_ракурс')" style="background:var(--blue);color:white;border:none;border-radius:8px;padding:4px 8px;font-family:'Nunito',sans-serif;font-size:11px;font-weight:800;cursor:pointer;">⬇️ ${t.responsePhotos ? t.responsePhotos.length + ' фото' : 'Фото'}</button>` : ''}
+        ${hasPhoto ? `<button onclick="downloadAllPhotos(getTaskPhotos('${t.id}'),'${(w?w.short:'')}_ракурс')" style="background:var(--blue);color:white;border:none;border-radius:8px;padding:4px 8px;font-family:'Nunito',sans-serif;font-size:11px;font-weight:800;cursor:pointer;">⬇️ ${t.responsePhotos ? t.responsePhotos.length + ' фото' : 'Фото'}</button>` : ''}
+        <button onclick="event.stopPropagation();taskAction('delete','${t.id}')" style="background:var(--red-l);color:var(--red);border:none;border-radius:8px;padding:4px 8px;font-size:12px;cursor:pointer;">🗑️</button>
       </div>
     `;
     rakursEl.appendChild(item);
@@ -2378,16 +2392,21 @@ function showBossHome() {
 
 function approveTask(id) {
   const t = tasks.find(x => x.id === id);
+  if (!t) return;
   t.status = 'done';
   saveTasks();
   showToast('✅ Принято!');
   const w = getAllWorkers().find(x => x.id === t.workerId);
   sendNotification('✅ Принято начальником!', `${t.address} — ${w ? w.short : ''}`, id);
-  showBossHome();
+  // Refresh current screen
+  const current = document.querySelector('.screen.active')?.id;
+  if (current === 'screen-rakurs-tracker') renderTracker();
+  else showBossHome();
 }
 
 function rejectTask(id) {
   const t = tasks.find(x => x.id === id);
+  if (!t) return;
   t.status = 'new';
   t.responsePhotoData = null;
   t.responsePhotos = null;
@@ -2395,17 +2414,40 @@ function rejectTask(id) {
   showToast('↩️ Отправлено на доработку');
   const w = getAllWorkers().find(x => x.id === t.workerId);
   sendNotification('↩️ Нужно переделать', `${t.address} — проверь задачу`, id);
-  showBossHome();
+  const current = document.querySelector('.screen.active')?.id;
+  if (current === 'screen-rakurs-tracker') renderTracker();
+  else showBossHome();
+}
+
+function deleteTask(id) {
+  if (!confirm('Удалить эту задачу полностью?')) return;
+  const idx = tasks.findIndex(x => x.id === id);
+  if (idx === -1) return;
+  tasks.splice(idx, 1);
+  saveTasks();
+  showToast('🗑️ Задача удалена');
+  const current = document.querySelector('.screen.active')?.id;
+  if (current === 'screen-rakurs-tracker') renderTracker();
+  else showBossHome();
 }
 
 function deletePortal(id) {
-  if (!confirm('Удалить PDF этого портала после закрытия?')) return;
+  if (!confirm('Удалить PDF этого портала?')) return;
   const t = tasks.find(x => x.id === id);
+  if (!t) return;
   t.hasPdf = false;
   t.pdfName = null;
+  t.pdfData = null;
   saveTasks();
   showToast('🗑️ PDF удалён');
   showBossHome();
+}
+
+// Safe task action — uses data-id to avoid quote issues
+function taskAction(action, id) {
+  if (action === 'approve') approveTask(id);
+  else if (action === 'reject') rejectTask(id);
+  else if (action === 'delete') deleteTask(id);
 }
 
 // ─── UTILS ───
