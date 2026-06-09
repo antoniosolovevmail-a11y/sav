@@ -3213,8 +3213,8 @@ function swOpenTask(id) {
     content += `
       <!-- Фото отработки портала -->
       <div style="background:var(--white);border-radius:20px;padding:18px;margin-bottom:14px;box-shadow:var(--shadow);">
-        <div style="font-size:13px;font-weight:800;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:1px;">📷 Фото выполненной работы</div>
-        <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">Прикрепи фото — начальник увидит что сделано</div>
+        <div style="font-size:13px;font-weight:800;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:1px;">📷 Фото отработки</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">Сфотографируй работу и отправь начальнику</div>
         <div id="sw-photo-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;min-height:50px;"></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
           <label style="background:var(--green);color:white;border-radius:16px;padding:16px;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:900;font-size:15px;">
@@ -3228,10 +3228,7 @@ function swOpenTask(id) {
         </div>
       </div>
       <button onclick="swMarkPortalDone()" style="width:100%;background:var(--green);color:white;border:none;border-radius:20px;padding:20px;font-family:'Nunito',sans-serif;font-size:18px;font-weight:900;cursor:pointer;margin-bottom:10px;box-shadow:0 6px 20px rgba(29,158,117,0.4);">
-        ✅ Закрыл в «Наш город» — отправить
-      </button>
-      <button onclick="showToast('Сообщение отправлено 📨')" style="width:100%;background:var(--red-l);color:var(--red);border:2px solid var(--red);border-radius:20px;padding:16px;font-family:'Nunito',sans-serif;font-size:16px;font-weight:900;cursor:pointer;">
-        ❗ Есть проблема — сообщить
+        📤 Отправить фото начальнику
       </button>
     `;
   } else if (t.type === 'portal' && t.status === 'done_pending') {
