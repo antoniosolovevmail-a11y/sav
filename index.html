@@ -1710,10 +1710,6 @@ function loadTasks() {
   }
 }
 
-function saveTasks() {
-  localStorage.setItem('savelo_tasks', JSON.stringify(tasks));
-}
-
 // ─── LOGIN ───
 function buildWorkerGrid() {
   const grid = document.getElementById('worker-grid');
@@ -2903,8 +2899,78 @@ document.getElementById('photo-fullscreen')?.addEventListener('click', function(
 });
 
 // ─── YANDEX DISK ───
-const YA_TOKEN = 'y0__wgBEPDltJkBGOmYQyDawcbqF3DtzCSEHVJQ9BYr58qOlkBKPrmA';
+const YA_TOKEN = 'y0__wgBEPDltJkBGOmYQyDGrcbqFzCHy9SiCA5WB6Z62njgnmfseB7FbLOlYn4-';
 const YA_FOLDER = 'disk:/Жилищник';
+const YA_DATA_FILE = 'disk:/Жилищник/savelo_data.json';
+
+async function checkYaDisk() {
+  try {
+    const res = await Promise.race([
+      fetch('https://cloud-api.yandex.net/v1/disk/', {
+        headers: { 'Authorization': `OAuth ${YA_TOKEN}` }
+      }),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
+    ]);
+    return res.ok;
+  } catch(e) { return false; }
+}
+
+// Сохранить все данные на Яндекс.Диск
+async function syncToYaDisk() {
+  try {
+    await yaEnsureFolder(YA_FOLDER);
+    const data = {
+      tasks,
+      customWorkers,
+      workerRoles: JSON.parse(localStorage.getItem('savelo_worker_roles') || '{}'),
+      ts: Date.now()
+    };
+    const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+    await yaUploadFile(YA_DATA_FILE, blob, 'application/json');
+  } catch(e) {
+    console.warn('Sync to YaDisk failed:', e);
+  }
+}
+
+// Загрузить данные с Яндекс.Диска
+async function syncFromYaDisk() {
+  try {
+    const res = await fetch(`https://cloud-api.yandex.net/v1/disk/resources/download?path=${encodeURIComponent(YA_DATA_FILE)}`, {
+      headers: { 'Authorization': `OAuth ${YA_TOKEN}` }
+    });
+    if (!res.ok) return false;
+    const { href } = await res.json();
+    if (!href) return false;
+    const dataRes = await fetch(href);
+    if (!dataRes.ok) return false;
+    const data = await dataRes.json();
+    if (data.tasks) {
+      tasks = data.tasks;
+      localStorage.setItem('savelo_tasks', JSON.stringify(tasks));
+    }
+    if (data.customWorkers) {
+      customWorkers = data.customWorkers;
+      localStorage.setItem('savelo_workers', JSON.stringify(customWorkers));
+    }
+    if (data.workerRoles) {
+      localStorage.setItem('savelo_worker_roles', JSON.stringify(data.workerRoles));
+      loadWorkerRoles();
+    }
+    return true;
+  } catch(e) {
+    console.warn('Sync from YaDisk failed:', e);
+    return false;
+  }
+}
+
+// Обновлённый saveTasks — сохраняет локально и на диск
+const _origSaveTasks = () => localStorage.setItem('savelo_tasks', JSON.stringify(tasks));
+
+function saveTasks() {
+  localStorage.setItem('savelo_tasks', JSON.stringify(tasks));
+  // Async sync to disk — не блокирует UI
+  syncToYaDisk().catch(() => {});
+}
 
 async function yaEnsureFolder(path) {
   try {
@@ -4398,8 +4464,36 @@ try {
   buildWorkerGrid();
 } catch(e) {
   console.error('Init error:', e);
-  buildWorkerGrid(); // try anyway
+  buildWorkerGrid();
 }
+
+// ─── СИНХРОНИЗАЦИЯ С ЯНДЕКС.ДИСКОМ ───
+(async () => {
+  const badge = document.createElement('div');
+  badge.id = 'sync-badge';
+  badge.style.cssText = 'position:fixed;bottom:84px;right:12px;font-size:11px;font-weight:800;padding:6px 12px;border-radius:20px;z-index:9997;box-shadow:0 2px 8px rgba(0,0,0,0.15);transition:all 0.3s;';
+  badge.style.background = '#FFF8DC';
+  badge.style.color = '#B8860B';
+  badge.innerHTML = '🔄 Синхронизация...';
+  document.body.appendChild(badge);
+
+  const ok = await syncFromYaDisk();
+
+  if (ok) {
+    badge.innerHTML = '✅ Синхронизировано';
+    badge.style.background = '#E8F8F3';
+    badge.style.color = '#1D9E75';
+    buildWorkerGrid();
+    // Refresh current screen if boss/brigadier
+    if (currentUser?.role === 'boss') showBossHome();
+    else if (currentUser?.worker) showSimpleWorkerHome(currentUser.worker);
+  } else {
+    badge.innerHTML = '📴 Работаю локально';
+    badge.style.background = '#F5F5F5';
+    badge.style.color = '#999';
+  }
+  setTimeout(() => badge.remove(), 3000);
+})();
 </script>
 </body>
 </html>
