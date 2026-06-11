@@ -1886,12 +1886,16 @@ function openPortal(id) {
   document.getElementById('pv-message').textContent = t.message || '—';
   document.getElementById('pdf-filename').textContent = t.pdfName || 'Документ.pdf';
 
-  // PDF viewer — show iframe if pdfData exists
+  // PDF viewer — blob button for mobile compatibility
   const pdfViewer = document.querySelector('.pdf-viewer');
   if (t.hasPdf && t.pdfData) {
     pdfViewer.style.display = 'block';
     document.getElementById('pdf-preview').innerHTML = `
-      <iframe src="${t.pdfData}" style="width:100%;height:500px;border:none;border-radius:0 0 12px 12px;" title="PDF"></iframe>
+      <div style="padding:14px;">
+        <button onclick="openPdfBlob('${t.id}')" style="width:100%;background:var(--blue);color:white;border:none;border-radius:14px;padding:16px;font-family:'Nunito',sans-serif;font-size:16px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;">
+          <span style="font-size:22px;">📄</span> Открыть PDF
+        </button>
+      </div>
     `;
     document.getElementById('pdf-preview').classList.add('open');
     document.getElementById('pdf-thumb').style.display = 'none';
@@ -2308,17 +2312,12 @@ function addTask() {
 
   if (assignType === 'all') {
     tasks.push(makeTask(null));
-    showToast('✅ Общая задача добавлена для всех!');
   } else if (assignType === 'multi') {
     if (selectedWorkerIds.size === 0) { showToast('Выбери хотя бы одного дворника!'); return; }
     selectedWorkerIds.forEach(wId => tasks.push(makeTask(wId)));
-    const names = [...selectedWorkerIds].map(id => getAllWorkers().find(w => w.id === id)?.short || '').join(', ');
-    showToast(`✅ Задача назначена: ${names}!`);
   } else {
     if (!workerId) { showToast('Выбери дворника!'); return; }
     tasks.push(makeTask(workerId));
-    const w = getAllWorkers().find(x => x.id === workerId);
-    showToast(`✅ Задача назначена: ${w ? w.short : ''}!`);
   }
 
   saveTasks();
@@ -2329,14 +2328,18 @@ function addTask() {
   document.getElementById('add-number').value = '';
   document.getElementById('add-deadline').value = '';
   document.getElementById('add-worker').value = '';
-  document.getElementById('pdf-upload-label').textContent = 'Нажми чтобы загрузить PDF';
-  document.getElementById('rakurs-photo-label').textContent = 'Нажми чтобы добавить фото замечания';
+  document.getElementById('pdf-upload-label').textContent = 'Загрузить PDF';
+  document.getElementById('rakurs-photo-label').textContent = 'Нажми чтобы добавить фото';
   document.getElementById('rakurs-photo-preview-grid').style.display = 'none';
   selectedWorkerIds = new Set();
   if (document.getElementById('worker-checkboxes')) buildWorkerCheckboxes();
   newPdfData = null; newPdfName = null; newRakursPhotos = [];
 
+  // Переключаемся на вкладку Задачи и скроллим наверх
+  bossCurrentTab = 'tasks';
   showBossHome();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  showToast('✅ Задача добавлена!');
 }
 
 // ─── SORT BY DEADLINE ───
@@ -2898,6 +2901,32 @@ document.getElementById('photo-fullscreen')?.addEventListener('click', function(
   if (e.target === this) closeFullscreen();
 });
 
+// ─── PDF VIEWER ───
+function openPdfBlob(taskId) {
+  const t = tasks.find(x => x.id === taskId);
+  if (!t || !t.pdfData) { showToast('PDF не найден'); return; }
+  try {
+    // Convert base64 to blob and open
+    const base64 = t.pdfData.split(',')[1];
+    const binary = atob(base64);
+    const arr = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) arr[i] = binary.charCodeAt(i);
+    const blob = new Blob([arr], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank');
+    // Clean up after delay
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+  } catch(e) {
+    // Fallback — open data URL directly
+    const win = window.open('', '_blank');
+    if (win) {
+      win.document.write(`<iframe src="${t.pdfData}" style="width:100%;height:100vh;border:none;"></iframe>`);
+    } else {
+      showToast('Разреши всплывающие окна в браузере');
+    }
+  }
+}
+
 // ─── YANDEX DISK ───
 const YA_TOKEN = 'y0__wgBEPDltJkBGOmYQyDGrcbqFzCHy9SiCA5WB6Z62njgnmfseB7FbLOlYn4-';
 const YA_FOLDER = 'disk:/Жилищник';
@@ -3233,8 +3262,13 @@ function swOpenTask(id) {
             <div style="font-size:11px;color:rgba(255,255,255,0.7);">${t.pdfName||'Документ.pdf'}</div>
           </div>
         </div>
-        ${t.pdfData ? `<iframe src="${t.pdfData}" style="width:100%;height:500px;border:none;" title="PDF"></iframe>`
-        : `<div style="padding:24px;text-align:center;color:var(--muted);font-size:13px;font-weight:700;">📄 Файл загружается...</div>`}
+        ${t.pdfData ? `
+          <div style="padding:14px;">
+            <button onclick="openPdfBlob('${t.id}')" style="width:100%;background:var(--blue);color:white;border:none;border-radius:14px;padding:16px;font-family:'Nunito',sans-serif;font-size:16px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;">
+              <span style="font-size:22px;">📄</span> Открыть PDF
+            </button>
+          </div>
+        ` : `<div style="padding:24px;text-align:center;color:var(--muted);font-size:13px;font-weight:700;">📄 PDF не прикреплён</div>`}
       </div>
     `;
   }
