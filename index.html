@@ -3079,3 +3079,555 @@ async function uploadPdfToYaDisk(pdfData, pdfName, taskId) {
   } catch(e) { return null; }
 }
 
+
+// ─── SIMPLE WORKER HOME ───
+let swCurrentTab = 'tasks';
+let swPhotos = [];
+
+function showSimpleWorkerHome(w) {
+  showScreen('screen-simple-worker');
+  document.getElementById('sw-name').textContent = w.name;
+  document.getElementById('sw-date').textContent = formatDate(new Date());
+  swCurrentTab = 'tasks';
+  document.getElementById('sw-btn-tasks').style.background = 'var(--green)';
+  document.getElementById('sw-btn-tasks').style.color = 'white';
+  document.getElementById('sw-btn-portals').style.background = 'var(--bg)';
+  document.getElementById('sw-btn-portals').style.color = 'var(--ink)';
+  swRenderTasks(w);
+}
+
+function swTab(tab) {
+  swCurrentTab = tab;
+  const w = currentUser?.worker;
+  document.getElementById('sw-btn-tasks').style.background = tab==='tasks' ? 'var(--green)' : 'var(--bg)';
+  document.getElementById('sw-btn-tasks').style.color = tab==='tasks' ? 'white' : 'var(--ink)';
+  document.getElementById('sw-btn-portals').style.background = tab==='portals' ? 'var(--green)' : 'var(--bg)';
+  document.getElementById('sw-btn-portals').style.color = tab==='portals' ? 'white' : 'var(--ink)';
+  swRenderTasks(w);
+}
+
+function swRenderTasks(w) {
+  const container = document.getElementById('sw-tasks');
+  const noTasks = document.getElementById('sw-no-tasks');
+  const badge = document.getElementById('sw-badge');
+  let myTasks = tasks.filter(t => t.workerId === w.id || t.isShared);
+  if (swCurrentTab === 'portals') myTasks = tasks.filter(t => t.type === 'portal');
+  const active = myTasks.filter(t => t.status !== 'done');
+  const sorted = sortByDeadline(active);
+  const newCount = active.filter(t => t.status === 'new').length;
+  badge.style.display = newCount > 0 ? 'flex' : 'none';
+  badge.textContent = newCount;
+  const newRakurs = active.filter(t => t.type === 'rakurs' && t.status === 'new');
+  const seriesBtn = document.getElementById('rakurs-series-btn');
+  const seriesCount = document.getElementById('rakurs-series-count');
+  if (seriesBtn) {
+    seriesBtn.style.display = newRakurs.length > 0 ? 'block' : 'none';
+    if (seriesCount) seriesCount.textContent = newRakurs.length === 1 ? '1 ракурс не отработан' : `${newRakurs.length} ракурсов не отработано`;
+  }
+  if (sorted.length === 0 && newRakurs.length === 0) { noTasks.style.display = 'block'; container.innerHTML = ''; return; }
+  noTasks.style.display = 'none';
+  const tasksToShow = swCurrentTab === 'tasks' && newRakurs.length > 0 ? sorted.filter(t => !(t.type === 'rakurs' && t.status === 'new')) : sorted;
+  if (tasksToShow.length === 0) { container.innerHTML = ''; return; }
+  container.innerHTML = tasksToShow.map(t => {
+    const typeInfo = swGetTypeInfo(t);
+    const urgency = getUrgency(t.deadline);
+    const isPending = t.status === 'done_pending';
+    return `<div onclick="swOpenTask('${t.id}')" style="background:var(--white);border-radius:24px;padding:20px;margin-bottom:14px;box-shadow:0 4px 20px rgba(0,0,0,0.08);border-left:6px solid ${isPending?'#F39C12':typeInfo.color};cursor:pointer;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <div style="width:54px;height:54px;border-radius:16px;background:${typeInfo.color}22;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;">${typeInfo.icon}</div>
+        <div style="flex:1;"><div style="font-size:18px;font-weight:900;color:var(--ink);">${typeInfo.label}</div><div style="font-size:13px;color:var(--muted);">📍 ${t.address}</div></div>
+        <div style="font-size:24px;">${isPending?'⏳':'▶️'}</div>
+      </div>
+      <div style="background:${typeInfo.color}11;border-radius:12px;padding:12px;margin-bottom:10px;"><div style="font-size:14px;font-weight:700;color:var(--ink);">${t.problem||t.type_violation||'—'}</div></div>
+      ${t.deadline?`<div style="display:flex;align-items:center;gap:6px;"><span>${urgency.icon}</span><span style="font-size:13px;font-weight:800;color:${urgency.color};">Срок: ${t.deadline}</span></div>`:''}
+      ${isPending?`<div style="background:#FEF9E7;border-radius:10px;padding:8px 12px;margin-top:8px;font-size:13px;font-weight:700;color:#9A6D00;">⏳ На проверке у начальника</div>`:''}
+      ${!isPending?`<div style="margin-top:12px;background:${typeInfo.color};color:white;border-radius:14px;padding:12px;text-align:center;font-size:15px;font-weight:900;">${typeInfo.action} →</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function swGetTypeInfo(t) {
+  if (t.type === 'portal') return { icon:'🚪', color:'#E74C3C', label:'Закрой заявку', action:'Открыть заявку' };
+  if (t.type === 'rakurs') return { icon:'📸', color:'#1D9E75', label:'Сфотографируй', action:'Сделать фото' };
+  if (t.sectionType === 'tskkb') return { icon:'🔍', color:'#9B59B6', label:'Замечание ЦККБ', action:'Посмотреть' };
+  if (t.sectionType === 'monitors') return { icon:'🖥️', color:'#2980B9', label:'Монитор', action:'Посмотреть' };
+  if (t.sectionType === 'boss-photos') return { icon:'📸', color:'#1D9E75', label:'Фото от начальства', action:'Посмотреть' };
+  return { icon:'📋', color:'#999', label:'Задача', action:'Открыть' };
+}
+
+function swOpenTask(id) {
+  const t = tasks.find(x => x.id === id);
+  if (!t) return;
+  const typeInfo = swGetTypeInfo(t);
+  currentTaskId = id;
+  document.getElementById('st-title').textContent = typeInfo.label;
+  const origPhotos = t.origPhotos || (t.origPhotoData ? [t.origPhotoData] : []);
+  const urgency = getUrgency(t.deadline);
+  let content = `
+    <div style="background:var(--white);border-radius:20px;padding:18px;margin-bottom:14px;box-shadow:var(--shadow);">
+      <div style="font-size:13px;color:var(--muted);font-weight:700;margin-bottom:4px;">📍 АДРЕС</div>
+      <div style="font-size:20px;font-weight:900;color:var(--ink);">${t.address}</div>
+      ${t.deadline?`<div style="font-size:14px;font-weight:800;color:${urgency.color};margin-top:6px;">${urgency.icon} Срок: ${t.deadline}</div>`:''}
+    </div>
+    <div style="background:${typeInfo.color}15;border-radius:20px;padding:18px;margin-bottom:14px;">
+      <div style="font-size:13px;color:var(--muted);font-weight:700;margin-bottom:6px;">⚠️ ЧТО НУЖНО СДЕЛАТЬ</div>
+      <div style="font-size:17px;font-weight:800;color:var(--ink);line-height:1.5;">${t.problem||t.type_violation||'—'}</div>
+    </div>`;
+  if (origPhotos.length > 0) {
+    content += `<div style="background:var(--white);border-radius:20px;padding:18px;margin-bottom:14px;box-shadow:var(--shadow);">
+      <div style="font-size:13px;color:var(--muted);font-weight:700;margin-bottom:10px;">📸 ФОТО ОТ НАЧАЛЬНИКА</div>
+      <div style="display:grid;grid-template-columns:${origPhotos.length===1?'1fr':'1fr 1fr'};gap:8px;">
+        ${origPhotos.map((src,i)=>`<div onclick="openFullscreen(swGetOrigPhotos(),${i})" style="border-radius:14px;overflow:hidden;cursor:zoom-in;aspect-ratio:4/3;"><img src="${src}" style="width:100%;height:100%;object-fit:cover;"></div>`).join('')}
+      </div>
+      <div style="font-size:12px;color:var(--muted);text-align:center;margin-top:8px;font-weight:700;">👆 Нажми чтобы увеличить</div>
+    </div>`;
+  }
+  if (t.hasPdf) {
+    content += `<div style="background:var(--white);border-radius:20px;overflow:hidden;margin-bottom:14px;box-shadow:var(--shadow);">
+      <div style="background:var(--blue);padding:14px 16px;display:flex;align-items:center;gap:10px;">
+        <span style="font-size:22px;">📄</span>
+        <div><div style="font-size:15px;font-weight:900;color:white;">Документ заявки</div><div style="font-size:11px;color:rgba(255,255,255,0.7);">${t.pdfName||'Документ.pdf'}</div></div>
+      </div>
+      ${t.pdfData?`<iframe src="${t.pdfData}" style="width:100%;height:500px;border:none;" title="PDF"></iframe>`:'<div style="padding:24px;text-align:center;color:var(--muted);">📄 Файл загружается...</div>'}
+    </div>`;
+  }
+  const comments = t.comments || [];
+  const unread = comments.filter(c => c.from === 'boss').length;
+  content += `<div style="background:var(--white);border-radius:20px;overflow:hidden;margin-bottom:14px;box-shadow:var(--shadow);">
+    <div style="background:#075E54;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;">
+      <div style="display:flex;align-items:center;gap:8px;"><span style="font-size:18px;">💬</span><span style="font-size:14px;font-weight:800;color:white;">Чат с начальником</span></div>
+      ${unread>0?`<span style="background:#E74C3C;color:white;font-size:11px;font-weight:800;padding:3px 8px;border-radius:20px;">${unread} сообщ.</span>`:''}
+    </div>
+    ${comments.length>0?`<div style="background:#ECE5DD;padding:10px 12px;max-height:200px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;">${comments.slice(-3).map(c=>{const isBoss=c.from==='boss';return`<div style="display:flex;flex-direction:column;align-items:${isBoss?'flex-end':'flex-start'};"><div style="background:${isBoss?'#1D9E75':'white'};color:${isBoss?'white':'var(--ink)'};padding:8px 12px;border-radius:14px;font-size:13px;font-weight:600;max-width:85%;">${!isBoss?`<div style="font-size:10px;font-weight:800;color:var(--green);margin-bottom:3px;">${c.name||'Дворник'}</div>`:''}${c.text}</div></div>`;}).join('')}</div>`:''}
+    <div style="padding:10px 12px;"><button onclick="openTaskChat('${t.id}','screen-simple-task')" style="width:100%;background:#075E54;color:white;border:none;border-radius:12px;padding:12px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;">💬 ${comments.length>0?'Открыть чат':'Написать начальнику'}</button></div>
+  </div>`;
+  // Action buttons
+  if (t.type === 'portal' && t.status === 'new') {
+    content += `<div style="background:var(--white);border-radius:20px;padding:18px;margin-bottom:14px;box-shadow:var(--shadow);">
+      <div style="font-size:13px;font-weight:800;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:1px;">📷 Фото отработки</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">Сфотографируй работу и отправь начальнику</div>
+      <div id="sw-photo-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;min-height:50px;"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <label style="background:var(--green);color:white;border-radius:16px;padding:16px;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:900;font-size:15px;">📷<span>Камера</span><input type="file" accept="image/*" capture="environment" style="display:none;" onchange="swAddPhoto(event)"></label>
+        <label style="background:var(--blue);color:white;border-radius:16px;padding:16px;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:900;font-size:15px;">🖼️<span>Галерея</span><input type="file" accept="image/*" multiple style="display:none;" onchange="swAddPhotos(event)"></label>
+      </div>
+    </div>
+    <button onclick="swMarkPortalDone()" style="width:100%;background:var(--green);color:white;border:none;border-radius:20px;padding:20px;font-family:'Nunito',sans-serif;font-size:18px;font-weight:900;cursor:pointer;margin-bottom:10px;box-shadow:0 6px 20px rgba(29,158,117,0.4);">📤 Отправить фото начальнику</button>`;
+  } else if (t.type === 'portal' && t.status === 'done_pending') {
+    const sentPhotos = t.responsePhotos || (t.responsePhotoData ? [t.responsePhotoData] : []);
+    content += `<div style="background:#FEF9E7;border-radius:20px;padding:18px;margin-bottom:14px;"><div style="font-size:18px;font-weight:900;color:#9A6D00;margin-bottom:6px;">⏳ На проверке у начальника</div>${sentPhotos.length>0?`<div style="font-size:12px;color:var(--muted);margin-bottom:8px;">Отправлено ${sentPhotos.length} фото</div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;">${sentPhotos.map((src,i)=>`<div onclick="openFullscreen(getPortalSentPhotos('${t.id}'),${i})" style="aspect-ratio:1;border-radius:10px;overflow:hidden;cursor:zoom-in;"><img src="${src}" style="width:100%;height:100%;object-fit:cover;"></div>`).join('')}</div>`:''}</div>`;
+  } else if (t.type === 'rakurs' && t.status === 'new') {
+    content += `<div style="background:var(--white);border-radius:20px;padding:18px;margin-bottom:14px;box-shadow:var(--shadow);">
+      <div style="font-size:14px;font-weight:800;color:var(--muted);margin-bottom:10px;">📷 ТВОЁ ФОТО</div>
+      <div id="sw-photo-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;min-height:60px;"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <label style="background:var(--green);color:white;border-radius:16px;padding:18px;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:900;font-size:16px;">📷<span>Камера</span><input type="file" accept="image/*" capture="environment" style="display:none;" onchange="swAddPhoto(event)"></label>
+        <label style="background:var(--blue);color:white;border-radius:16px;padding:18px;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:900;font-size:16px;">🖼️<span>Галерея</span><input type="file" accept="image/*" multiple style="display:none;" onchange="swAddPhotos(event)"></label>
+      </div>
+    </div>
+    <button onclick="swSendRakurs()" style="width:100%;background:var(--green);color:white;border:none;border-radius:20px;padding:22px;font-family:'Nunito',sans-serif;font-size:20px;font-weight:900;cursor:pointer;box-shadow:0 6px 20px rgba(29,158,117,0.4);">📤 Отправить фото начальнику</button>`;
+  } else if (t.status === 'done_pending') {
+    content += `<div style="background:#FEF9E7;border-radius:20px;padding:20px;text-align:center;"><div style="font-size:48px;margin-bottom:8px;">⏳</div><div style="font-size:20px;font-weight:900;color:#9A6D00;">Ждём проверки начальника</div></div>`;
+  } else if (t.status === 'done') {
+    content += `<div style="background:var(--green-l);border-radius:20px;padding:20px;text-align:center;"><div style="font-size:48px;margin-bottom:8px;">✅</div><div style="font-size:20px;font-weight:900;color:var(--green-d);">Принято! Молодец!</div></div>`;
+  }
+  document.getElementById('st-content').innerHTML = content;
+  window.swGetOrigPhotos = () => origPhotos;
+  swPhotos = [];
+  swRenderPhotoGrid();
+  showScreen('screen-simple-task');
+}
+
+function swAddPhoto(e) { const f=e.target.files[0]; if(!f)return; compressAndAddSW([f]); e.target.value=''; }
+function swAddPhotos(e) { const f=Array.from(e.target.files); if(!f.length)return; compressAndAddSW(f); e.target.value=''; }
+
+function compressAndAddSW(files) {
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX = 1200;
+        let w = img.width, h = img.height;
+        if (w > MAX) { h = h*MAX/w; w = MAX; }
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        swPhotos.push(canvas.toDataURL('image/jpeg', 0.7));
+        swRenderPhotoGrid();
+        showToast('📷 Фото добавлено!');
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function swRenderPhotoGrid() {
+  const grid = document.getElementById('sw-photo-grid');
+  if (!grid) return;
+  if (swPhotos.length === 0) { grid.innerHTML = '<div style="grid-column:span 3;text-align:center;padding:16px;color:var(--muted);font-size:14px;font-weight:700;">Нажми 📷 чтобы добавить фото</div>'; return; }
+  grid.innerHTML = swPhotos.map((src,i)=>`<div style="position:relative;aspect-ratio:1;border-radius:12px;overflow:hidden;cursor:zoom-in;" onclick="openFullscreen(swPhotos,${i})"><img src="${src}" style="width:100%;height:100%;object-fit:cover;"><button onclick="event.stopPropagation();swPhotos.splice(${i},1);swRenderPhotoGrid()" style="position:absolute;top:4px;right:4px;background:rgba(231,76,60,0.9);color:white;border:none;border-radius:50%;width:24px;height:24px;font-size:13px;cursor:pointer;">✕</button></div>`).join('');
+}
+
+function getPortalSentPhotos(taskId) {
+  const t = tasks.find(x => x.id === taskId);
+  return t ? (t.responsePhotos || (t.responsePhotoData ? [t.responsePhotoData] : [])) : [];
+}
+
+async function swMarkPortalDone() {
+  const t = tasks.find(x => x.id === currentTaskId);
+  const w = currentUser?.worker;
+  const photosCopy = [...swPhotos];
+  const overlay = showUploadOverlay(Math.max(photosCopy.length, 1));
+  let yaUrls = null;
+  if (photosCopy.length > 0) {
+    try { yaUrls = await uploadPhotosToYaDisk(photosCopy, w?w.short:'дворник', t.address, t.id, (d,total)=>updateUploadProgress(overlay,d,total)); } catch(e) {}
+  } else { updateUploadProgress(overlay, 1, 1); }
+  t.status = 'done_pending';
+  if (photosCopy.length > 0) { t.responsePhotos = photosCopy; t.responsePhotoData = photosCopy[0]; if (yaUrls) t.yaPhotoUrls = yaUrls; }
+  saveTasks();
+  showUploadSuccess(overlay, photosCopy.length, t.address);
+  swPhotos = [];
+  setTimeout(() => { overlay.remove(); if(currentUser?.worker?.role==='brigadier') showBrigadierHome(currentUser.worker); else showSimpleWorkerHome(currentUser.worker); }, 2500);
+}
+
+async function swSendRakurs() {
+  if (swPhotos.length === 0) { showToast('Сначала добавь фото! 📷'); return; }
+  const t = tasks.find(x => x.id === currentTaskId);
+  const w = currentUser?.worker;
+  const photosCopy = [...swPhotos];
+  const overlay = showUploadOverlay(photosCopy.length);
+  let yaUrls = null;
+  try { yaUrls = await uploadPhotosToYaDisk(photosCopy, w?w.short:'дворник', t.address, t.id, (d,total)=>updateUploadProgress(overlay,d,total)); } catch(e) {}
+  t.status = 'done_pending'; t.responsePhotos = [...photosCopy]; t.responsePhotoData = photosCopy[0];
+  if (yaUrls) t.yaPhotoUrls = yaUrls;
+  saveTasks();
+  showUploadSuccess(overlay, photosCopy.length, t.address);
+  swPhotos = [];
+  setTimeout(() => { overlay.remove(); if(currentUser?.worker?.role==='brigadier') showBrigadierHome(currentUser.worker); else showSimpleWorkerHome(currentUser.worker); }, 2500);
+}
+
+// ─── RAKURS SERIES ───
+let rsSeries = [], rsIndex = 0, rsPhotos = {};
+
+function startRakursSeries() {
+  const w = currentUser?.worker;
+  if (!w) return;
+  rsSeries = sortByDeadline(tasks.filter(t => t.type==='rakurs' && t.status==='new' && (t.workerId===w.id||t.isShared)));
+  if (rsSeries.length === 0) { showToast('Нет ракурсов для отработки!'); return; }
+  rsIndex = 0; rsPhotos = {};
+  rsRender();
+  showScreen('screen-rakurs-series');
+}
+
+function rsRender() {
+  const t = rsSeries[rsIndex];
+  const total = rsSeries.length;
+  const done = Object.keys(rsPhotos).filter(id => rsPhotos[id]?.length > 0).length;
+  document.getElementById('rs-title').textContent = t.address;
+  document.getElementById('rs-counter').textContent = `${rsIndex+1}/${total}`;
+  document.getElementById('rs-done-badge').textContent = `✅ ${done}/${total}`;
+  document.getElementById('rs-progress').style.width = Math.round(rsIndex/total*100)+'%';
+  const origPhotos = t.origPhotos || (t.origPhotoData ? [t.origPhotoData] : []);
+  const beforeEl = document.getElementById('rs-before-photo');
+  window.rsGetOrigPhotos = () => origPhotos;
+  window.rsGetAfterPhotos = (id) => rsPhotos[id] || [];
+  if (origPhotos.length > 0) {
+    beforeEl.innerHTML = `<img src="${origPhotos[0]}" style="width:100%;height:100%;object-fit:cover;" onclick="openFullscreen(rsGetOrigPhotos(),0)">`;
+    beforeEl.style.cursor = 'zoom-in';
+  } else {
+    beforeEl.innerHTML = `<div style="text-align:center;color:rgba(255,255,255,0.3);"><div style="font-size:32px;">🖼️</div><div style="font-size:12px;margin-top:4px;">Нет фото замечания</div></div>`;
+  }
+  const descEl = document.getElementById('rs-before-desc');
+  const desc = t.type_violation || t.problem || '';
+  descEl.textContent = desc; descEl.style.display = desc ? 'block' : 'none';
+  const myPhotos = rsPhotos[t.id] || [];
+  const afterEl = document.getElementById('rs-after-area');
+  if (myPhotos.length === 0) {
+    afterEl.innerHTML = `<div style="text-align:center;color:rgba(255,255,255,0.4);padding:20px;"><div style="font-size:40px;margin-bottom:8px;">📷</div><div style="font-size:14px;font-weight:700;">Сними с того же ракурса</div></div>`;
+  } else {
+    afterEl.innerHTML = `<div style="display:grid;grid-template-columns:repeat(${Math.min(myPhotos.length+1,3)},1fr);gap:3px;width:100%;height:100%;">${myPhotos.map((src,i)=>`<div onclick="openFullscreen(rsGetAfterPhotos('${t.id}'),${i})" style="position:relative;overflow:hidden;cursor:zoom-in;background:#000;"><img src="${src}" style="width:100%;height:100%;object-fit:cover;"><button onclick="event.stopPropagation();rsRemovePhoto('${t.id}',${i})" style="position:absolute;top:4px;right:4px;background:rgba(231,76,60,0.9);color:white;border:none;border-radius:50%;width:22px;height:22px;font-size:11px;cursor:pointer;">✕</button></div>`).join('')}<label style="display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(29,158,117,0.15);border:2px dashed rgba(29,158,117,0.4);cursor:pointer;gap:4px;"><span style="font-size:24px;">➕</span><input type="file" accept="image/*" capture="environment" style="display:none;" onchange="rsAddPhoto(event,'${t.id}')"></label></div>`;
+  }
+  const actEl = document.getElementById('rs-actions');
+  actEl.innerHTML = `<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px;">
+    <label style="background:#1D9E75;color:white;border-radius:14px;padding:12px 8px;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:900;font-size:12px;">📷<span>Камера</span><input type="file" accept="image/*" capture="environment" style="display:none;" onchange="rsAddPhoto(event,'${t.id}')"></label>
+    <label style="background:#2980B9;color:white;border-radius:14px;padding:12px 8px;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:900;font-size:12px;">🖼️<span>Галерея</span><input type="file" accept="image/*" multiple style="display:none;" onchange="rsAddPhotos(event,'${t.id}')"></label>
+    <button onclick="rsSkip()" style="background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.7);border:none;border-radius:14px;padding:12px 8px;font-family:'Nunito',sans-serif;font-size:12px;font-weight:800;cursor:pointer;">Пропустить →</button>
+  </div>
+  <button onclick="rsNext()" style="width:100%;background:${myPhotos.length>0?'#1D9E75':'rgba(255,255,255,0.1)'};color:white;border:none;border-radius:16px;padding:14px;font-family:'Nunito',sans-serif;font-size:16px;font-weight:900;cursor:pointer;">${rsIndex<rsSeries.length-1?(myPhotos.length>0?'✅ Готово → Следующий ракурс':'→ Следующий ракурс'):'📤 Отправить все фото'}</button>`;
+}
+
+function rsAddPhoto(e,taskId){const f=e.target.files[0];if(!f)return;rsCompressAndAdd([f],taskId);e.target.value='';}
+function rsAddPhotos(e,taskId){const f=Array.from(e.target.files);if(!f.length)return;rsCompressAndAdd(f,taskId);e.target.value='';}
+function rsCompressAndAdd(files,taskId){files.forEach(file=>{const reader=new FileReader();reader.onload=ev=>{const img=new Image();img.onload=()=>{const canvas=document.createElement('canvas');const MAX=1200;let w=img.width,h=img.height;if(w>MAX){h=h*MAX/w;w=MAX;}canvas.width=w;canvas.height=h;canvas.getContext('2d').drawImage(img,0,0,w,h);if(!rsPhotos[taskId])rsPhotos[taskId]=[];rsPhotos[taskId].push(canvas.toDataURL('image/jpeg',0.7));rsRender();showToast('📷 Фото добавлено!');};img.src=ev.target.result;};reader.readAsDataURL(file);});}
+function rsRemovePhoto(taskId,i){rsPhotos[taskId].splice(i,1);rsRender();}
+function rsSkip(){if(rsIndex<rsSeries.length-1){rsIndex++;rsRender();}}
+function rsNext(){const t=rsSeries[rsIndex];const myPhotos=rsPhotos[t.id]||[];if(myPhotos.length===0&&rsIndex<rsSeries.length-1){rsIndex++;rsRender();return;}if(rsIndex<rsSeries.length-1){rsIndex++;rsRender();}else{rsSendAll();}}
+
+async function rsSendAll() {
+  const w = currentUser?.worker;
+  const toSend = rsSeries.filter(t => (rsPhotos[t.id]||[]).length > 0);
+  if (toSend.length === 0) { showToast('Нет фото для отправки!'); return; }
+  const totalPhotos = toSend.reduce((s,t) => s+rsPhotos[t.id].length, 0);
+  const overlay = showUploadOverlay(totalPhotos);
+  let sent = 0;
+  for (const t of toSend) {
+    const photos = rsPhotos[t.id];
+    try {
+      const yaUrls = await uploadPhotosToYaDisk(photos, w?w.short:'дворник', t.address, t.id, (d,total)=>{updateUploadProgress(overlay,sent+d,totalPhotos);});
+      t.status = 'done_pending'; t.responsePhotos = [...photos]; t.responsePhotoData = photos[0];
+      if (yaUrls) t.yaPhotoUrls = yaUrls;
+    } catch(e) { t.status='done_pending'; t.responsePhotos=[...photos]; t.responsePhotoData=photos[0]; }
+    sent += photos.length; updateUploadProgress(overlay, sent, totalPhotos);
+  }
+  saveTasks();
+  overlay.innerHTML = `<div style="font-size:86px;margin-bottom:12px;animation:popIn 0.4s ease-out;">✅</div><div style="font-size:24px;font-weight:900;color:var(--green);margin-bottom:6px;">Всё отправлено!</div><div style="font-size:15px;color:var(--muted);">${toSend.length} ракурсов · ${totalPhotos} фото</div><div style="margin-top:16px;font-size:12px;color:var(--muted);">Возврат через 2 сек...</div>`;
+  setTimeout(()=>{overlay.remove();if(currentUser?.worker?.role==='brigadier')showBrigadierHome(currentUser.worker);else showSimpleWorkerHome(currentUser.worker);},2500);
+}
+
+function exitRakursSeries(){if(Object.keys(rsPhotos).some(id=>rsPhotos[id]?.length>0)){if(!confirm('Фото не отправлены. Выйти?'))return;}showSimpleWorkerHome(currentUser.worker);}
+
+// ─── BRIGADIER ───
+function showBrigadierHome(w) {
+  showScreen('screen-brigadier');
+  document.getElementById('brig-name').textContent = w.name;
+  document.getElementById('brig-date').textContent = formatDate(new Date());
+  document.getElementById('brig-stat-new').textContent = tasks.filter(t=>t.status==='new').length;
+  document.getElementById('brig-stat-pending').textContent = tasks.filter(t=>t.status==='done_pending').length;
+  document.getElementById('brig-stat-done').textContent = tasks.filter(t=>t.status==='done').length;
+  const myTasks = tasks.filter(t=>t.workerId===w.id||t.isShared);
+  document.getElementById('brig-my-tasks').innerHTML = myTasks.length===0?'<div style="text-align:center;padding:16px;color:var(--muted);font-size:13px;">Нет личных задач</div>':myTasks.map(t=>buildBrigTaskCard(t,true)).join('');
+  const allEl = document.getElementById('brig-all-tasks');
+  const sorted = sortByDeadline(tasks.filter(t=>t.status==='new'&&t.workerId&&t.workerId!==w.id));
+  allEl.innerHTML = sorted.length===0?'<div style="text-align:center;padding:16px;color:var(--muted);font-size:13px;">Нет активных задач</div>':sorted.slice(0,10).map(t=>buildBrigTaskCard(t,false)).join('');
+  const pendingEl = document.getElementById('brig-pending');
+  const pendingTasks = tasks.filter(t=>t.status==='done_pending');
+  pendingEl.innerHTML = pendingTasks.length===0?'<div style="text-align:center;padding:16px;color:var(--muted);font-size:13px;">Нет задач на проверке</div>':pendingTasks.map(t=>buildBrigTaskCard(t,false)).join('');
+}
+
+function buildBrigTaskCard(t, isMyTask) {
+  const ww = getAllWorkers().find(x=>x.id===t.workerId);
+  const urgency = getUrgency(t.deadline);
+  const colors = {new:'#E74C3C',done_pending:'#F39C12',done:'#1D9E75'};
+  const labels = {new:'🔴 Новое',done_pending:'⏳ Проверка',done:'✅ Готово'};
+  return `<div style="background:var(--white);border-radius:16px;padding:13px 14px;margin-bottom:8px;box-shadow:var(--shadow);border-left:4px solid ${colors[t.status]||'#ccc'};"><div style="display:flex;align-items:flex-start;gap:8px;"><div style="font-size:20px;">${t.type==='portal'?'🚪':t.type==='section'?'📋':'📸'}</div><div style="flex:1;"><div style="font-size:13px;font-weight:800;">${t.address}</div><div style="font-size:11px;color:var(--muted);">${t.problem||t.type_violation||'—'}</div>${t.deadline?`<div style="font-size:10px;font-weight:800;color:${urgency.color};">${urgency.icon} ${t.deadline}</div>`:''} ${ww&&!isMyTask?`<div style="font-size:10px;color:var(--green-d);">🧹 ${ww.short}</div>`:''}</div><span style="font-size:10px;font-weight:800;padding:3px 8px;border-radius:10px;background:${colors[t.status]||'#ccc'}22;color:${colors[t.status]||'#ccc'};">${labels[t.status]||'—'}</span></div></div>`;
+}
+
+function showBrigSections() {
+  showScreen('screen-brig-sections');
+  const portals = tasks.filter(t=>t.type==='portal'&&t.status==='new').length;
+  const el = document.getElementById('brig-portals-count');
+  if (el) el.textContent = portals>0?`🔴 ${portals} активных`:'✅ Нет активных';
+  ['tskkb','monitors'].forEach(type=>{const count=tasks.filter(t=>t.sectionType===type&&t.status==='new').length;const cel=document.getElementById(`brig-${type}-count`);if(cel)cel.textContent=count>0?`🔴 ${count} новых`:'';});
+  const allR=tasks.filter(t=>t.type==='rakurs');const doneR=allR.filter(t=>t.status==='done').length;const brigR=document.getElementById('brig-rakurs-count');if(brigR)brigR.textContent=`${doneR}/${allR.length} отработано`;
+}
+
+function showBrigMyTasks() {
+  showScreen('screen-brig-tasks');
+  const w = currentUser?.worker;
+  if (!w) return;
+  const myTasks = sortByDeadline(tasks.filter(t=>t.workerId===w.id));
+  const el = document.getElementById('brig-my-tasks-screen');
+  el.innerHTML = myTasks.length===0?'<div style="text-align:center;padding:60px 20px;color:var(--muted);"><div style="font-size:48px;">🎉</div><div style="font-size:18px;font-weight:800;margin-top:12px;">Нет личных задач</div></div>':myTasks.map(t=>buildBrigTaskCard(t,true)).join('');
+}
+
+let brigPortalFilter = 'all';
+function showBrigPortals(){showScreen('screen-brig-portals');brigPortalFilter='all';document.querySelectorAll('[data-bp]').forEach(b=>b.classList.remove('active'));document.querySelector('[data-bp="all"]')?.classList.add('active');renderBrigPortals();}
+function setBrigPortalFilter(f,btn){brigPortalFilter=f;document.querySelectorAll('[data-bp]').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderBrigPortals();}
+function renderBrigPortals(){let portals=tasks.filter(t=>t.type==='portal');if(brigPortalFilter!=='all')portals=portals.filter(t=>t.status===brigPortalFilter);portals=sortByDeadline(portals);const countEl=document.getElementById('brig-portals-header-count');if(countEl)countEl.textContent=`${portals.length} записей`;const list=document.getElementById('brig-portals-list');const colors={new:'#E74C3C',done_pending:'#F39C12',done:'#1D9E75'};const labels={new:'🔴 Активен',done_pending:'⏳ Проверка',done:'✅ Закрыт'};if(portals.length===0){list.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted);"><div style="font-size:40px;">🎉</div><div style="font-size:16px;font-weight:800;margin-top:8px;">Нет записей</div></div>';return;}list.innerHTML=portals.map(t=>{const w=getAllWorkers().find(x=>x.id===t.workerId);const urgency=getUrgency(t.deadline);return`<div style="background:var(--white);border-radius:16px;padding:14px;margin-bottom:10px;box-shadow:var(--shadow);border-left:5px solid ${colors[t.status]||'#ccc'};"><div style="display:flex;align-items:flex-start;gap:10px;"><div style="font-size:22px;">🚪</div><div style="flex:1;"><div style="font-size:14px;font-weight:800;">${t.address}</div><div style="font-size:11px;color:var(--muted);">№ ${t.number||'—'} · ${t.problem||'—'}</div>${t.deadline?`<div style="font-size:10px;font-weight:800;color:${urgency.color};">${urgency.icon} ${t.deadline}</div>`:''} ${w?`<div style="font-size:10px;color:var(--green-d);">🧹 ${w.short}</div>`:''}</div><span style="font-size:10px;font-weight:800;padding:4px 8px;border-radius:10px;background:${colors[t.status]}22;color:${colors[t.status]};">${labels[t.status]||'—'}</span></div></div>`;}).join('');}
+
+// ─── RAKURS TRACKER ───
+let trackerFilter = 'all', trackerSearch = '';
+function showRakursTracker(){showScreen('screen-rakurs-tracker');renderTracker();}
+function setTrackerFilter(f,btn){trackerFilter=f;document.querySelectorAll('[data-tf]').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderTracker();}
+function filterTracker(){trackerSearch=document.getElementById('tracker-search').value.toLowerCase();renderTracker();}
+function renderTracker(){
+  const allRakurs=tasks.filter(t=>t.type==='rakurs');
+  const total=allRakurs.length,done=allRakurs.filter(t=>t.status==='done').length,pending=allRakurs.filter(t=>t.status==='done_pending').length,newCount=allRakurs.filter(t=>t.status==='new').length;
+  const pct=total>0?Math.round(done/total*100):0;
+  const statsEl=document.getElementById('tracker-stats');if(statsEl)statsEl.textContent=`${done}/${total}`;
+  const pctEl=document.getElementById('tracker-pct');if(pctEl)pctEl.textContent=pct+'%';
+  const barEl=document.getElementById('tracker-progress-bar');if(barEl)barEl.style.width=pct+'%';
+  const doneEl=document.getElementById('tracker-done-count');if(doneEl)doneEl.textContent=`✅ ${done} отработано`;
+  const leftEl=document.getElementById('tracker-left-count');if(leftEl)leftEl.textContent=`🔴 ${newCount} осталось`;
+  const sumEl=document.getElementById('rakurs-tracker-summary');if(sumEl)sumEl.textContent=`${done}/${total} отработано · ${newCount} ожидают · ${pending} на проверке`;
+  let filtered=allRakurs;
+  if(trackerFilter!=='all')filtered=filtered.filter(t=>t.status===trackerFilter);
+  if(trackerSearch)filtered=filtered.filter(t=>(t.address||'').toLowerCase().includes(trackerSearch)||(t.type_violation||'').toLowerCase().includes(trackerSearch));
+  filtered=sortByDeadline(filtered);
+  const list=document.getElementById('tracker-list');if(!list)return;
+  if(filtered.length===0){list.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted);"><div style="font-size:40px;">🎉</div><div style="font-size:15px;font-weight:800;margin-top:8px;">Ничего не найдено</div></div>';return;}
+  const colors={new:'#E74C3C',done_pending:'#F39C12',done:'#1D9E75'};
+  const labels={new:'🔴 Не отработан',done_pending:'⏳ На проверке',done:'✅ Отработан'};
+  list.innerHTML=filtered.map((t,idx)=>{
+    const w=getAllWorkers().find(x=>x.id===t.workerId);const urgency=getUrgency(t.deadline);
+    const hasPhotos=t.responsePhotos?.length||t.responsePhotoData;
+    const origPhotos=t.origPhotos||(t.origPhotoData?[t.origPhotoData]:[]);
+    return `<div style="background:var(--white);border-radius:16px;padding:14px;margin-bottom:8px;box-shadow:var(--shadow);border-left:5px solid ${colors[t.status]||'#ccc'};">
+      <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;">
+        <div style="background:${colors[t.status]}22;color:${colors[t.status]};font-size:11px;font-weight:800;padding:4px 8px;border-radius:20px;white-space:nowrap;">№${idx+1}</div>
+        <div style="flex:1;"><div style="font-size:13px;font-weight:800;">${t.address}</div><div style="font-size:11px;color:var(--muted);">${t.type_violation||t.problem||'—'}</div></div>
+        <div style="text-align:right;">${t.deadline?`<div style="font-size:10px;font-weight:800;color:${urgency.color};">${urgency.icon} ${t.deadline}</div>`:''} ${w?`<div style="font-size:10px;color:var(--muted);">🧹 ${w.short}</div>`:''}</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;">
+        <div><div style="font-size:9px;font-weight:800;color:var(--muted);margin-bottom:3px;text-transform:uppercase;">Замечание</div>${origPhotos.length>0?`<div style="aspect-ratio:4/3;border-radius:8px;overflow:hidden;cursor:zoom-in;" onclick="openFullscreen(getOrigPhotos('${t.id}'),0)"><img src="${origPhotos[0]}" style="width:100%;height:100%;object-fit:cover;"></div>`:'<div style="aspect-ratio:4/3;border-radius:8px;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--muted);">Нет фото</div>'}</div>
+        <div><div style="font-size:9px;font-weight:800;color:var(--muted);margin-bottom:3px;text-transform:uppercase;">Отработка</div>${hasPhotos?`<div style="aspect-ratio:4/3;border-radius:8px;overflow:hidden;cursor:zoom-in;" onclick="openTaskPhoto('${t.id}',0)"><img src="${t.responsePhotos?.[0]||t.responsePhotoData}" style="width:100%;height:100%;object-fit:cover;">${(t.responsePhotos?.length||0)>1?`<div style="position:absolute;bottom:3px;right:4px;background:rgba(29,158,117,0.9);color:white;font-size:9px;font-weight:800;padding:2px 6px;border-radius:8px;">+${t.responsePhotos.length-1}</div>`:''}</div>`:'<div style="aspect-ratio:4/3;border-radius:8px;background:var(--bg);border:2px dashed var(--line);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:var(--muted);">⏳ Ждём</div>'}</div>
+      </div>
+      ${t.status==='done_pending'?`<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;"><button onclick="approveTask('${t.id}');renderTracker()" style="background:var(--green);color:white;border:none;border-radius:10px;padding:10px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer;">✅ Принять</button><button onclick="rejectTask('${t.id}')" style="background:var(--red-l);color:var(--red);border:none;border-radius:10px;padding:10px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer;">↩️ Доработать</button></div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function getOrigPhotos(taskId){const t=tasks.find(x=>x.id===taskId);return t?(t.origPhotos||(t.origPhotoData?[t.origPhotoData]:[])):[]; }
+
+// ─── TASK CHAT ───
+let chatTaskId = null, chatFromScreen = null;
+function openTaskChat(taskId, fromScreen) {
+  chatTaskId = taskId; chatFromScreen = fromScreen || 'screen-boss';
+  const t = tasks.find(x=>x.id===taskId); if(!t) return;
+  document.getElementById('chat-title').textContent = t.type==='portal'?'🚪 Чат по порталу':'📸 Чат по ракурсу';
+  document.getElementById('chat-addr').textContent = t.address;
+  document.getElementById('chat-back-btn').onclick = () => { showScreen(chatFromScreen); if(chatFromScreen==='screen-boss') showBossHome(); };
+  renderChatMessages(t);
+  showScreen('screen-task-chat');
+  setTimeout(()=>{const msgs=document.getElementById('chat-messages');msgs.scrollTop=msgs.scrollHeight;},50);
+}
+function renderChatMessages(t){
+  const msgs=document.getElementById('chat-messages');
+  const comments=t.comments||[];
+  if(comments.length===0){msgs.innerHTML='<div style="text-align:center;padding:40px 20px;color:#666;"><div style="font-size:36px;margin-bottom:8px;">💬</div><div style="font-size:14px;font-weight:700;">Нет сообщений</div></div>';return;}
+  msgs.innerHTML=comments.map(c=>{const isBoss=c.from==='boss';const time=new Date(c.ts).toLocaleTimeString('ru',{hour:'2-digit',minute:'2-digit'});const date=new Date(c.ts).toLocaleDateString('ru',{day:'numeric',month:'short'});return`<div class="chat-msg ${isBoss?'from-boss':'from-worker'}"><div class="chat-bubble">${!isBoss?`<div style="font-size:11px;font-weight:800;color:var(--green);margin-bottom:4px;">${c.name||'Дворник'}</div>`:''}${c.text}${c.isReject?'<div style="font-size:11px;margin-top:4px;opacity:0.8;">↩️ Отправлено на доработку</div>':''}</div><div class="chat-meta">${date} · ${time}</div></div>`;}).join('');
+}
+function sendChatMsg(){
+  const input=document.getElementById('chat-input');const text=input.value.trim();if(!text||!chatTaskId)return;
+  const t=tasks.find(x=>x.id===chatTaskId);if(!t)return;
+  if(!t.comments)t.comments=[];
+  const isBoss=currentUser?.role==='boss';const w=currentUser?.worker;
+  t.comments.push({id:Date.now(),from:isBoss?'boss':'worker',name:isBoss?'Начальник':(w?.short||'Дворник'),text,ts:Date.now(),isRead:false});
+  saveTasks();input.value='';input.style.height='auto';renderChatMessages(t);
+  const msgs=document.getElementById('chat-messages');msgs.scrollTop=msgs.scrollHeight;
+}
+
+// ─── WORKERS MANAGEMENT ───
+let customWorkers = JSON.parse(localStorage.getItem('savelo_workers') || '[]');
+let nwRole = 'worker';
+function getAllWorkers(){return [...WORKERS,...customWorkers];}
+function saveCustomWorkers(){localStorage.setItem('savelo_workers',JSON.stringify(customWorkers));}
+function setNwRole(role,btn){nwRole=role;document.querySelectorAll('#nw-role-worker,#nw-role-brigadier').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
+
+const ALL_ADDRESSES = ['ВМ 2','ВМ 4,6','ВМ 8,10,12','ВМ 16','ВМ 20','ВМ 22','ВМ 24','ВМ 28','ВМ 28к2','ПР 3/1','ПР 5','ПР 7','ПР 9с1','ПР 11А','ПР 13к1,13к2','ПР 15','ПР 17','ПР 17А','ПР 25А','ПР 25к1,25к2','ПР 25к3','СПР 3','СПР 5-13','СПР 6к1','СПР 6к2,6к3','СПР 15-17','Мишина 4','Мишина 16','Мишина 22','Мишина 23','Мишина 26','Мишина 27,29','Мишина 28','Мишина 34к1,34к2','Мишина 38','Мишина 39','Мишина 42','Юн 6к1,6к2','Юн 7','Юн 8А','Юн 14,14А','Юн 15к1,15к2','Юн 17к1-17к4','Мир 3,5','Мир 4','Мир 8к1,8к2,8к3','Мир 16к1,16к2','8М 2/10к1,к2,к3','8М 6','8М 8к1,к2'];
+let selectedAddresses = new Set();
+
+function buildAddressGrid(){const grid=document.getElementById('nw-address-grid');if(!grid)return;selectedAddresses=new Set();grid.innerHTML=ALL_ADDRESSES.map(addr=>`<div onclick="toggleAddr(this,'${addr}')" style="padding:6px 10px;border-radius:8px;border:1.5px solid var(--line);font-size:11px;font-weight:700;cursor:pointer;background:var(--white);text-align:center;" data-addr="${addr}">${addr}</div>`).join('');}
+function toggleAddr(el,addr){if(selectedAddresses.has(addr)){selectedAddresses.delete(addr);el.style.background='var(--white)';el.style.borderColor='var(--line)';el.style.color='var(--ink)';}else{selectedAddresses.add(addr);el.style.background='var(--green)';el.style.borderColor='var(--green)';el.style.color='white';}document.getElementById('nw-addresses').value=[...selectedAddresses].join(', ');}
+
+function addNewWorker(){
+  const name=document.getElementById('nw-name').value.trim();const short=document.getElementById('nw-short').value.trim();const phone=document.getElementById('nw-phone').value.trim();const addrsText=document.getElementById('nw-addresses').value.trim();
+  if(!name){showToast('Введи имя дворника!');return;}
+  const newId=100+customWorkers.length+Date.now()%1000;
+  const addresses=addrsText?addrsText.split(',').map(a=>a.trim()).filter(Boolean):[];
+  const worker={id:newId,name,short:short||name.split(' ')[0],phone:phone||'—',emoji:'🧹',role:nwRole,addresses,custom:true};
+  customWorkers.push(worker);saveCustomWorkers();
+  document.getElementById('nw-name').value='';document.getElementById('nw-short').value='';document.getElementById('nw-phone').value='';document.getElementById('nw-addresses').value='';
+  buildAddressGrid();showToast(`✅ ${worker.short} добавлен!`);
+  buildWorkerGrid();renderWorkersList();populateWorkerSelect();syncToYaDisk().catch(()=>{});
+}
+
+function removeWorker(id){if(!confirm('Удалить этого дворника?'))return;customWorkers=customWorkers.filter(w=>w.id!==id);saveCustomWorkers();renderWorkersList();buildWorkerGrid();populateWorkerSelect();showToast('🗑️ Дворник удалён');}
+
+function renderWorkersList(){
+  const el=document.getElementById('boss-workers-list');if(!el)return;
+  const all=getAllWorkers();
+  el.innerHTML=all.map(w=>`<div style="background:var(--white);border-radius:16px;padding:12px 14px;margin-bottom:8px;box-shadow:var(--shadow);display:flex;align-items:center;gap:10px;"><div style="font-size:22px;">${w.role==='brigadier'?'⭐':'🧹'}</div><div style="flex:1;"><div style="font-size:13px;font-weight:800;color:var(--ink);">${w.name}</div><div style="font-size:11px;color:var(--muted);margin-top:1px;">${w.phone||'—'}</div>${w.addresses?.length?'<div style="font-size:10px;color:var(--green-d);margin-top:2px;font-weight:700;">📍 '+w.addresses.slice(0,3).join(', ')+(w.addresses.length>3?'...':'')+'</div>':''}</div>${w.custom?'<button onclick="removeWorker('+w.id+')" style="background:var(--red-l);color:var(--red);border:none;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:800;cursor:pointer;">✕</button>':''}</div>`).join('');
+}
+
+// ─── BOSS: BRIGADIERS ───
+function buildBrigadierGrid(){
+  const grid=document.getElementById('brigadier-grid');if(!grid)return;
+  grid.innerHTML=getAllWorkers().map(w=>{const isBrig=w.role==='brigadier';return`<div onclick="toggleBrigadier(${w.id})" id="brig-card-${w.id}" style="padding:10px;border-radius:12px;border:2px solid ${isBrig?'#7F3FBF':'var(--line)'};background:${isBrig?'#F5EEFF':'var(--white)'};cursor:pointer;display:flex;align-items:center;gap:8px;"><div style="font-size:20px;">${isBrig?'⭐':'🧹'}</div><div><div style="font-size:12px;font-weight:800;color:${isBrig?'#7F3FBF':'var(--ink)'};">${w.short}</div><div style="font-size:10px;color:var(--muted);">${isBrig?'Бригадир':'Дворник'}</div></div></div>`;}).join('');
+}
+
+function toggleBrigadier(id){
+  const allW=getAllWorkers();const w=allW.find(x=>x.id===id);if(!w)return;
+  w.role=w.role==='brigadier'?'worker':'brigadier';
+  if(w.custom){saveCustomWorkers();}else{const bw=WORKERS.find(x=>x.id===id);if(bw)bw.role=w.role;const saved=JSON.parse(localStorage.getItem('savelo_worker_roles')||'{}');saved[id]=w.role;localStorage.setItem('savelo_worker_roles',JSON.stringify(saved));}
+  showToast(w.role==='brigadier'?`⭐ ${w.short} — теперь бригадир!`:`🧹 ${w.short} — снова дворник`);
+  buildBrigadierGrid();buildWorkerGrid();renderWorkersList();syncToYaDisk().catch(()=>{});
+}
+
+function loadWorkerRoles(){const saved=JSON.parse(localStorage.getItem('savelo_worker_roles')||'{}');Object.entries(saved).forEach(([id,role])=>{const w=WORKERS.find(x=>x.id===parseInt(id));if(w)w.role=role;});}
+
+// ─── UPLOAD OVERLAY ───
+function showUploadOverlay(total){
+  document.getElementById('send-overlay')?.remove();
+  const overlay=document.createElement('div');overlay.id='send-overlay';
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(255,255,255,0.97);z-index:9998;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;';
+  overlay.innerHTML=`<div style="font-size:52px;margin-bottom:16px;">📤</div><div style="font-size:20px;font-weight:900;color:var(--ink);margin-bottom:6px;">Отправляю фото...</div><div id="upload-progress-text" style="font-size:14px;color:var(--muted);margin-bottom:14px;">0 из ${total}</div><div style="width:260px;background:var(--line);border-radius:20px;height:14px;overflow:hidden;"><div id="upload-progress-bar" style="height:14px;background:linear-gradient(90deg,var(--green),#27C48F);border-radius:20px;width:0%;transition:width 0.3s;"></div></div><div id="upload-pct" style="font-size:32px;font-weight:900;color:var(--green);margin-top:10px;">0%</div><div style="font-size:12px;color:var(--muted);margin-top:8px;opacity:0.7;">Не закрывай приложение</div>`;
+  if(!document.getElementById('sw-anim-style')){const style=document.createElement('style');style.id='sw-anim-style';style.textContent='@keyframes popIn{0%{transform:scale(0.3);opacity:0}70%{transform:scale(1.15)}100%{transform:scale(1);opacity:1}}';document.head.appendChild(style);}
+  document.body.appendChild(overlay);return overlay;
+}
+function updateUploadProgress(overlay,done,total){const pct=Math.round(done/total*100);const bar=overlay.querySelector('#upload-progress-bar');const text=overlay.querySelector('#upload-progress-text');const pctEl=overlay.querySelector('#upload-pct');if(bar)bar.style.width=pct+'%';if(text)text.textContent=`${done} из ${total}`;if(pctEl)pctEl.textContent=pct+'%';}
+function showUploadSuccess(overlay,count,address){overlay.innerHTML=`<div style="font-size:86px;margin-bottom:12px;animation:popIn 0.4s ease-out;">✅</div><div style="font-size:24px;font-weight:900;color:var(--green);margin-bottom:6px;">Отправлено!</div><div style="font-size:14px;color:var(--muted);">${count} фото → начальнику</div><div style="margin-top:18px;background:var(--green-l);border-radius:16px;padding:12px 20px;"><div style="font-size:13px;color:var(--green-d);font-weight:700;">📍 ${address}</div></div><div style="margin-top:14px;font-size:12px;color:var(--muted);">Возврат через 2 сек...</div>`;}
+
+// ─── SECTIONS ───
+const SECTION_CONFIG = {tskkb:{title:'ЦККБ',icon:'🔍',color:'#E74C3C',desc:'Замечания от инспектора ЦККБ',type:'tskkb'},monitors:{title:'Мониторы',icon:'🖥️',color:'#2980B9',desc:'Нарушения из системы мониторинга',type:'monitors'},'boss-photos':{title:'Фото от начальства',icon:'📸',color:'#1D9E75',desc:'Инструкции и фото от руководителя',type:'boss-photos'}};
+
+function showSections(){showScreen('screen-sections');['tskkb','monitors','boss-photos'].forEach(type=>{const items=tasks.filter(t=>t.sectionType===type&&(!t.workerId||t.workerId===currentUser?.id||t.isShared));const newCount=items.filter(t=>t.status==='new').length;const el=document.getElementById(`${type}-count`);if(el)el.textContent=newCount>0?`🔴 ${newCount} новых`:items.length>0?`✅ ${items.length} записей`:'Нет записей';});}
+
+function openSection(type){
+  const cfg=SECTION_CONFIG[type];document.getElementById('section-detail-title').textContent=`${cfg.icon} ${cfg.title}`;
+  const items=tasks.filter(t=>t.sectionType===type&&(!t.workerId||t.workerId===currentUser?.id||t.isShared));
+  const newItems=items.filter(t=>t.status==='new').length;
+  const countEl=document.getElementById('section-new-count');if(countEl){countEl.style.display=newItems>0?'block':'none';countEl.textContent=newItems+' новых';}
+  const content=document.getElementById('section-detail-content');
+  if(items.length===0){content.innerHTML=`<div style="text-align:center;padding:60px 20px;color:var(--muted);"><div style="font-size:48px;margin-bottom:12px;">${cfg.icon}</div><div style="font-size:16px;font-weight:800;">Нет записей</div></div>`;showScreen('screen-section-detail');return;}
+  content.innerHTML=items.map(t=>{const w=getAllWorkers().find(x=>x.id===t.workerId);const urgency=getUrgency(t.deadline);const photos=t.origPhotos||(t.origPhotoData?[t.origPhotoData]:[]);return`<div style="background:var(--white);border-radius:var(--radius);padding:16px;margin-bottom:12px;box-shadow:var(--shadow);border-left:5px solid ${cfg.color};"><div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;"><div style="font-size:22px;">${cfg.icon}</div><div style="flex:1;"><div style="font-size:14px;font-weight:800;">${t.address}</div><div style="font-size:11px;color:var(--muted);">${t.problem||t.type_violation||'—'}</div>${t.deadline?`<div style="font-size:10px;font-weight:800;color:${urgency.color};">${urgency.icon} Срок: ${t.deadline}</div>`:''}</div><span style="font-size:10px;font-weight:800;padding:3px 8px;border-radius:10px;background:${t.status==='new'?'#FDEDEC':t.status==='done_pending'?'#FEF9E7':'#E8F8F3'};color:${t.status==='new'?'#E74C3C':t.status==='done_pending'?'#F39C12':'#1D9E75'};">${t.status==='new'?'🔴 Новое':t.status==='done_pending'?'⏳ На проверке':'✅ Готово'}</span></div>${photos.length>0?`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px;">${photos.map((src,i)=>`<div style="aspect-ratio:1;border-radius:8px;overflow:hidden;cursor:zoom-in;" onclick="openFullscreen(getSectionPhotos('${t.id}'),${i})"><img src="${src}" style="width:100%;height:100%;object-fit:cover;"></div>`).join('')}</div>`:''}${t.status==='new'&&type!=='boss-photos'?`<button onclick="markSectionDone('${t.id}')" style="width:100%;background:var(--green);color:white;border:none;border-radius:12px;padding:12px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;">✅ Выполнено</button>`:''}`;}).join('');
+  showScreen('screen-section-detail');
+}
+
+function getSectionPhotos(taskId){const t=tasks.find(x=>x.id===taskId);return t?(t.origPhotos||(t.origPhotoData?[t.origPhotoData]:[])):[]; }
+function markSectionDone(id){const t=tasks.find(x=>x.id===id);if(!t)return;t.status='done_pending';saveTasks();showToast('✅ Отправлено на проверку!');openSection(t.sectionType);}
+
+// ─── PWA INSTALL ───
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredPrompt=e; const btn=document.getElementById('install-btn');if(btn)btn.style.display='block'; });
+window.addEventListener('appinstalled', () => { deferredPrompt=null; const btn=document.getElementById('install-btn');if(btn)btn.style.display='none'; showToast('🎉 Приложение установлено!'); });
+function installPWA(){if(deferredPrompt){deferredPrompt.prompt();deferredPrompt.userChoice.then(c=>{if(c.outcome==='accepted')showToast('📲 Устанавливается...');deferredPrompt=null;});}else{showToast('На iPhone: Safari → "Поделиться" → "На экран Домой"');}}
+
+async function requestNotifications(){if(!('Notification' in window))return false;if(Notification.permission==='granted')return true;if(Notification.permission==='denied')return false;const perm=await Notification.requestPermission();return perm==='granted';}
+async function sendNotification(title,body,tag){const ok=await requestNotifications();if(!ok)return;if('serviceWorker' in navigator){const reg=await navigator.serviceWorker.ready;reg.showNotification(title,{body,icon:'icon.png',badge:'icon.png',tag:tag||'zhilishnik',vibrate:[200,100,200],requireInteraction:true});}else{new Notification(title,{body,icon:'icon.png'});}}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{});}
+
+// ─── INIT ───
+try {
+  loadTasks();
+  loadWorkerRoles();
+  customWorkers = JSON.parse(localStorage.getItem('savelo_workers') || '[]');
+  buildWorkerGrid();
+} catch(e) {
+  console.error('Init error:', e);
+  buildWorkerGrid();
+}
+
+(async () => {
+  const badge = document.createElement('div');
+  badge.id = 'sync-badge';
+  badge.style.cssText = 'position:fixed;bottom:84px;right:12px;font-size:11px;font-weight:800;padding:6px 12px;border-radius:20px;z-index:9997;box-shadow:0 2px 8px rgba(0,0,0,0.15);';
+  badge.style.background = '#FFF8DC'; badge.style.color = '#B8860B';
+  badge.innerHTML = '🔄 Синхронизация...';
+  document.body.appendChild(badge);
+  const ok = await syncFromYaDisk();
+  if (ok) {
+    badge.innerHTML = '✅ Синхронизировано'; badge.style.background = '#E8F8F3'; badge.style.color = '#1D9E75';
+    buildWorkerGrid();
+    if(currentUser?.role==='boss') showBossHome();
+    else if(currentUser?.worker) showSimpleWorkerHome(currentUser.worker);
+  } else {
+    badge.innerHTML = '📴 Работаю локально'; badge.style.background = '#F5F5F5'; badge.style.color = '#999';
+  }
+  setTimeout(()=>badge.remove(), 3000);
+})();
+</script>
+</body>
+</html>
