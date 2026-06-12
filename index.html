@@ -3571,7 +3571,6 @@ function updateUploadProgress(overlay,done,total){const pct=Math.round(done/tota
 function showUploadSuccess(overlay,count,address){overlay.innerHTML=`<div style="font-size:86px;margin-bottom:12px;animation:popIn 0.4s ease-out;">✅</div><div style="font-size:24px;font-weight:900;color:var(--green);margin-bottom:6px;">Отправлено!</div><div style="font-size:14px;color:var(--muted);">${count} фото → начальнику</div><div style="margin-top:18px;background:var(--green-l);border-radius:16px;padding:12px 20px;"><div style="font-size:13px;color:var(--green-d);font-weight:700;">📍 ${address}</div></div><div style="margin-top:14px;font-size:12px;color:var(--muted);">Возврат через 2 сек...</div>`;}
 
 // ─── SECTIONS ───
-const SECTION_CONFIG = {tskkb:{title:'ЦККБ',icon:'🔍',color:'#E74C3C',desc:'Замечания от инспектора ЦККБ',type:'tskkb'},monitors:{title:'Мониторы',icon:'🖥️',color:'#2980B9',desc:'Нарушения из системы мониторинга',type:'monitors'},'boss-photos':{title:'Фото от начальства',icon:'📸',color:'#1D9E75',desc:'Инструкции и фото от руководителя',type:'boss-photos'}};
 
 function showSections(){showScreen('screen-sections');['tskkb','monitors','boss-photos'].forEach(type=>{const items=tasks.filter(t=>t.sectionType===type&&(!t.workerId||t.workerId===currentUser?.id||t.isShared));const newCount=items.filter(t=>t.status==='new').length;const el=document.getElementById(`${type}-count`);if(el)el.textContent=newCount>0?`🔴 ${newCount} новых`:items.length>0?`✅ ${items.length} записей`:'Нет записей';});}
 
